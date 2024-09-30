@@ -53,11 +53,9 @@ def create_GT_mask(model_folder):
 
 
 if __name__ == "__main__":
-    parent_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model"
-    model_folders = glob.glob(os.path.join(parent_folder, "model_*"))
-    model_folders = [os.path.abspath(i) for i in model_folders]
+    # folder containing trainingSet
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/fullModel/"
     app = PyQt5.QtWidgets.QApplication(sys.argv)
-    for model_folder in tqdm.tqdm(model_folders):
-        create_GT_mask(model_folder)
+    create_GT_mask(model_folder)
     app.quit()
     print("All binary masks/ground truth images found. Move to the next step.")
