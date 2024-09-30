@@ -1,34 +1,13 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Apr 24 16:26:06 2020
-
-@author: gritti
-"""
-
 import os, tqdm
 from skimage.io import imread, imsave
 import numpy as np
 import scipy.ndimage as ndi
 import multiprocessing
 from itertools import repeat
-
-# import sys
-# sys.path.append(os.path.join('..'))
-from orgseg.DatasetTools import io as ioDT
-import orgseg.DatasetTools.multiprocessing.istarmap
-from orgseg.MLModel import io as ioML
-from orgseg.MLModel import predict
-
-###############################################################################
-
-image_folders = [
-    os.path.join("test_data", "2020-09-22_conditions", "init_150cells"),
-    os.path.join("test_data", "2020-09-22_conditions", "init_300cells"),
-]
-
-model_folder = os.path.join("test_data", "2020-09-22_conditions", "model")
-
-###############################################################################
+from morgana.DatasetTools import io as ioDT
+import morgana.DatasetTools.multiprocessing.istarmap
+from morgana.MLModel import io as ioML
+from morgana.MLModel import predict
 
 
 def predict_single_image(f_in, classifier, scaler, params):
@@ -42,7 +21,6 @@ def predict_single_image(f_in, classifier, scaler, params):
         parent, "result_segmentation", filename + "_watershed" + file_extension
     )
 
-    #    print('#'*20+'\nLoading',f_in,'...')
     img = imread(f_in)
     if len(img.shape) == 2:
         img = np.expand_dims(img, 0)
@@ -51,8 +29,6 @@ def predict_single_image(f_in, classifier, scaler, params):
     img = img[0]
 
     if not os.path.exists(new_name_classifier):
-        # print('Predicting image...')
-
         pred, prob = predict.predict_image(
             img,
             classifier,
@@ -61,59 +37,36 @@ def predict_single_image(f_in, classifier, scaler, params):
             new_shape_scale=params["down_shape"],
             feature_mode=params["feature_mode"],
         )
-
-        # remove objects at the border
         negative = ndi.binary_fill_holes(pred == 0)
         mask_pred = (pred == 1) * negative
         edge_prob = ((2**16 - 1) * prob[2]).astype(np.uint16)
         mask_pred = mask_pred.astype(np.uint8)
-
-        # save mask
         imsave(new_name_classifier, pred)
 
     if not os.path.exists(new_name_watershed):
-        # perform watershed
         mask_final = predict.make_watershed(
             mask_pred, edge_prob, new_shape_scale=params["down_shape"]
         )
-
-        # save final mask
         imsave(new_name_watershed, mask_final)
 
     return None
 
 
-###############################################################################
-
-if __name__ == "__main__":
-
+def predict_batch(image_folders, model_folder):
     for image_folder in image_folders:
-
-        ### compute parent folder as absolute path
         image_folder = os.path.abspath(image_folder)
-
         print("-------------" + image_folder + "------------")
         training_folder = os.path.join(model_folder, "trainingset")
-
         print("##### Loading classifier model and parameters...")
         classifier, scaler, params = ioML.load_model(model_folder)
         print("##### Model loaded!")
-
-        #######################################################################
-        ### apply classifiers and save images
-
         result_folder = os.path.join(image_folder, "result_segmentation")
         if not os.path.exists(result_folder):
             os.mkdir(result_folder)
-
         flist_in = ioDT.get_image_list(image_folder)
         flist_in.sort()
         N_img = len(flist_in)
-
-        # multiprocess
         N_cores = np.clip(int(0.8 * multiprocessing.cpu_count()), 1, None)
-
-        # try using multiprocessing
         pool = multiprocessing.Pool(N_cores)
         _ = list(
             tqdm.tqdm(
@@ -129,5 +82,10 @@ if __name__ == "__main__":
                 total=N_img,
             )
         )
-
         print("All images done!")
+
+
+if __name__ == "__main__":
+    image_folders = ["/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy/data"]
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model"
+    predict_batch(image_folders, model_folder)

@@ -9,16 +9,24 @@ def read_example_data(fname, N_modes=50):
     # read points
     contour = pd.read_csv(fname)
     if contour.x.values[-1] != contour.x.values[0]:
-#        print('Appending first element to make it a close curve')
+        #        print('Appending first element to make it a close curve')
         new_x = list(contour.x.values).append(contour.x[0])
         new_y = list(contour.y.values).append(contour.y[0])
         # newrow = pd.Series({'x': contour.x[0], 'y': contour.y[0]})
-        
+
         contour = pd.DataFrame({"x": new_x, "y": new_y})
 
-    initialize_values = [0. for i in range(len(contour.x))]
-    variables = ['deltax',  'deltay',       'deltat',       't',
-                'xi',       'sumdeltaxj',   'sumdeltayj',   'epsilon']
+    initialize_values = [0.0 for i in range(len(contour.x))]
+    variables = [
+        "deltax",
+        "deltay",
+        "deltat",
+        "t",
+        "xi",
+        "sumdeltaxj",
+        "sumdeltayj",
+        "epsilon",
+    ]
 
     for variable in variables:
         contour[variable] = initialize_values
@@ -27,44 +35,87 @@ def read_example_data(fname, N_modes=50):
 
     return contour, mode
 
+
 def initialize_mode(N_modes_original=50):
     # construct the mode dictionary
-    N_modes = N_modes_original+2
+    N_modes = N_modes_original + 2
 
-    variables = ['alpha',           'beta',             'gamma',            'delta',
-                'tau',              'alphaprime',       'gammaprime',       'rho',
-                'alphastar',        'betastar',         'gammastar',        'deltastar', 
-                'r',                'a',                'b',                'c',
-                'd',                'aprime',           'bprime',           'cprime',
-                'dprime',           'phi',              'theta',            'lambda1',          
-                'lambda2',          'lambda21',         'lambda12',         'lambdaplus',       
-                'lambdaminus',      'zetaplus',         'zetaminus',        'locooffseta',
-                'locooffsetc',      'locolambdaplus',   'locolambdaminus',   'locozetaplus',     
-                'locozetaminus',    'locoL',            'locoaplus',        'locobplus', 
-                'lococplus',        'locodplus',        'locoaminus',       'locobminus', 
-                'lococminus',       'locodminus']
-    initialize_values = [0. for i in range(N_modes)]
+    variables = [
+        "alpha",
+        "beta",
+        "gamma",
+        "delta",
+        "tau",
+        "alphaprime",
+        "gammaprime",
+        "rho",
+        "alphastar",
+        "betastar",
+        "gammastar",
+        "deltastar",
+        "r",
+        "a",
+        "b",
+        "c",
+        "d",
+        "aprime",
+        "bprime",
+        "cprime",
+        "dprime",
+        "phi",
+        "theta",
+        "lambda1",
+        "lambda2",
+        "lambda21",
+        "lambda12",
+        "lambdaplus",
+        "lambdaminus",
+        "zetaplus",
+        "zetaminus",
+        "locooffseta",
+        "locooffsetc",
+        "locolambdaplus",
+        "locolambdaminus",
+        "locozetaplus",
+        "locozetaminus",
+        "locoL",
+        "locoaplus",
+        "locobplus",
+        "lococplus",
+        "locodplus",
+        "locoaminus",
+        "locobminus",
+        "lococminus",
+        "locodminus",
+    ]
+    initialize_values = [0.0 for i in range(N_modes)]
 
-    mode = pd.DataFrame(dict(zip(variables, [initialize_values]*len(variables))))
-    
+    mode = pd.DataFrame(dict(zip(variables, [initialize_values] * len(variables))))
+
     return mode
 
+
 def get_edge_points(mask, N_modes=50):
-#    print('Extracting edge points from mask...')
+    #    print('Extracting edge points from mask...')
 
     # make sure there is a edge
-    mask[0,:] = mask[-1,:] = mask[:,0] = mask[:,-1] = 0
+    mask[0, :] = mask[-1, :] = mask[:, 0] = mask[:, -1] = 0
 
     # find points on the edge
-    points = find_contours(mask,0.)[0]
-    contour = pd.DataFrame({
-        'x': points[:,0],
-        'y': points[:,1]
-    })
+    points = find_contours(mask, 0.0)[0]
+    contour = pd.DataFrame({"x": points[:, 0], "y": points[:, 1]})
 
-    initialize_values = [0. for i in range(len(contour.x))]
-    variables = ['deltax',  'deltay',       'deltat',       't',
-                'xi',       'sumdeltaxj',   'sumdeltayj',   'epsilon']
+    initialize_values = [0.0 for i in range(len(contour.x))]
+    variables = [
+        "deltax",
+        "deltay",
+        "deltat",
+        "t",
+        "xi",
+        "sumdeltaxj",
+        "sumdeltayj",
+        "epsilon",
+    ]
 
     for variable in variables:
         contour[variable] = initialize_values

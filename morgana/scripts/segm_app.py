@@ -6,12 +6,14 @@ Created on Wed Apr  3 10:57:50 2019
 @author: ngritti
 """
 import sys, os
+
 filepath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0,os.path.join(filepath,'..'))
+sys.path.insert(0, os.path.join(filepath, ".."))
 import PyQt5.QtWidgets
 import GUIs.mainwindow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def run():
         app = PyQt5.QtWidgets.QApplication(sys.argv)
         gallery = GUIs.mainwindow.gastrSegmentApp()
@@ -19,4 +21,3 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
 
     run()
-

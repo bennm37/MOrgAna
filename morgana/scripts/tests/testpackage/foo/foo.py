@@ -1,5 +1,4 @@
-
-print('foo imported')
+print("foo imported")
 
 
 def print_smt(_str):

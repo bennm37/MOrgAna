@@ -2,11 +2,13 @@ import os
 import pandas as pd
 import numpy as np
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
-    sys.path.append(os.path.join('..'))
+
+    sys.path.append(os.path.join(".."))
 
 from morgana.DatasetTools.fluorescence import computefluorescence, io
+
 
 def collect_fluo_data(groups, channel, distType, isTimelapse=False):
 
@@ -23,28 +25,28 @@ def collect_fluo_data(groups, channel, distType, isTimelapse=False):
         # extract table in the group
         folders = groups[i]
         N_folders = len(folders)
-        
+
         # extract folders (dataset) in the table
         for j in range(N_folders):
             input_folder = folders[j]
             _, cond = os.path.split(input_folder)
-            save_folder = os.path.join(input_folder,'result_segmentation')
-            fname = os.path.join(save_folder,cond+'_fluo_intensity.json')
+            save_folder = os.path.join(input_folder, "result_segmentation")
+            fname = os.path.join(save_folder, cond + "_fluo_intensity.json")
 
             # if morpho_params of straighten image not created yet, compute and save
             if not os.path.exists(fname):
                 data = computefluorescence.compute_fluorescence_info(input_folder)
-                io.save_fluo_info( save_folder, cond, data )
+                io.save_fluo_info(save_folder, cond, data)
             else:
                 # else, just load it
-                data = io.load_fluo_info( save_folder, cond  )
+                data = io.load_fluo_info(save_folder, cond)
                 # if fluo info was created long time ago and doesn't have all parameters, create it again
-                if 'ch%d_'%channel+distType not in data.keys():
+                if "ch%d_" % channel + distType not in data.keys():
                     data = computefluorescence.compute_fluorescence_info(input_folder)
-                    io.save_fluo_info( save_folder, cond, data )
+                    io.save_fluo_info(save_folder, cond, data)
 
             # select for the right channel
-            if not any( 'ch%d_'%channel in k for k in data.keys() ):
+            if not any("ch%d_" % channel in k for k in data.keys()):
                 # if there is no such a channel, quit
                 return None
 
@@ -58,12 +60,12 @@ def collect_fluo_data(groups, channel, distType, isTimelapse=False):
             #       data
             # g1    val
             # g2    val ;
-            # 
+            #
             # ...
             # ]
             #
             # note: the ... can be:
-            # i. a single number (area in non timelapse mode), 
+            # i. a single number (area in non timelapse mode),
             # ii. a list (1D object, area in timelapse mode or AP fluorescence profile in non timelapse mode),
             # iii. a list of lists (2D object, AP fluorescence profile in non timelapse mode)
             #
@@ -72,28 +74,34 @@ def collect_fluo_data(groups, channel, distType, isTimelapse=False):
             # select channels needed
 
             # filter for needed info
-            keys = [ 'ch%d_'%channel+distType, 'ch%d_'%channel+'Background' ]
+            keys = [
+                "ch%d_" % channel + distType,
+                "ch%d_" % channel + "Background",
+            ]
             data = data[keys]
-            if not 'ch%d_'%channel+'Background' in data.keys():
-                data['ch%d_'%channel+'Background'] = 0.
+            if not "ch%d_" % channel + "Background" in data.keys():
+                data["ch%d_" % channel + "Background"] = 0.0
             # print(data)
 
             if isTimelapse:
                 # if this is a timelapse dataset, all data should be stored in the same object
-                rows = pd.Series({ key: list(data[key].values) for key in keys }).to_frame().T
+                rows = pd.Series({key: list(data[key].values) for key in keys}).to_frame().T
             else:
                 rows = data
 
             # concatenate to existing dataframe
-            data_all[i] = pd.concat([data_all[i], rows], ignore_index=True)  
+            data_all[i] = pd.concat([data_all[i], rows], ignore_index=True)
             # data_all[i] = data_all[i].append(rows, ignore_index=True)
 
     return data_all
 
-if __name__ == '__main__':
-    folders = [['C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G']]
+
+if __name__ == "__main__":
+    folders = [
+        ["C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"]
+    ]
     channel = 1
-    distributionType = 'Average'
+    distributionType = "Average"
     isTimelapse = False
 
     data = collect_fluo_data(folders, channel, distributionType, isTimelapse)
@@ -101,7 +109,7 @@ if __name__ == '__main__':
     # print(data[0]['ch%d_%s'%(channel,distributionType)].values[0])
 
 
-'''
+"""
 [
     {
     'input_file': ''
@@ -170,4 +178,4 @@ DATAFRAME with timelapse:
 }
 
 
-'''
+"""

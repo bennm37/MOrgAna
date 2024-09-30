@@ -11,38 +11,18 @@ from morgana.GUIs import inspection
 from morgana.DatasetTools.segmentation import io as ioSeg
 from morgana.DatasetTools import io as ioDT
 
-###############################################################################
-
-# select folder containing all image folders to be analysed
-parent_folder = os.path.join("test_data", "2020-09-22_conditions")
-
-print("Image subfolders found in: " + parent_folder)
-if os.path.exists(parent_folder):
-    print("Path exists! Proceed!")  # check if the path exists
-
-# find out all image subfolders in parent_folder
-folder_names = next(os.walk(parent_folder))[1]
-
-model_folders = glob.glob(os.path.join(parent_folder, "model_*"))
-model_folders_name = [os.path.split(model_folder)[-1] for model_folder in model_folders]
-
-# exclude folders in exclude_folder
-exclude_folder = [""]
-
-image_folders = [g for g in folder_names if not g in model_folders_name + exclude_folder]
-image_folders = [os.path.join(parent_folder, i) for i in image_folders]
-
-###############################################################################
+parent_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model_copy"
+image_folders = ["/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy/data"]
 
 if __name__ == "__main__":
     app = PyQt5.QtWidgets.QApplication(sys.argv)
 
     for image_folder in image_folders:
 
-        ### compute parent folder as absolute path
+    ### compute parent folder as absolute path
         image_folder = os.path.abspath(image_folder)
 
-        print("\n-------------" + image_folder + "------------\n")
+        ("\n-------------" + image_folder + "------------\n")
 
         flist_in = ioDT.get_image_list(image_folder)
         n_imgs = len(flist_in)
@@ -73,3 +53,5 @@ if __name__ == "__main__":
         w.show()
         app.exec()
     app.quit()
+
+

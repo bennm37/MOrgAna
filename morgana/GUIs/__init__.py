@@ -2,6 +2,8 @@ import morgana.GUIs.fluo
 import morgana.GUIs.inspection
 import morgana.GUIs.mainwindow
 import morgana.GUIs.manualmask
+import morgana.GUIs.editmask
+
 # import orgseg.GUIs.spot
 import morgana.GUIs.visualize0d
 import morgana.GUIs.visualize1d

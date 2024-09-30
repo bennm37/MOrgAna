@@ -8,10 +8,12 @@ Created on Wed Apr  3 10:57:50 2019
 import sys
 import PyQt5.QtWidgets
 from morgana.GUIs.mainwindow import morganaApp
+
 # filepath = os.path.dirname(os.path.abspath(__file__))
 # sys.path.insert(0,os.path.join(filepath))
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def run():
         app = PyQt5.QtWidgets.QApplication(sys.argv)
         gallery = morganaApp()
@@ -19,4 +21,3 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
 
     run()
-
