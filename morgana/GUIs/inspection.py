@@ -446,7 +446,7 @@ class inspectionWindow_20max(QDialog):
                         filename + "_manual" + extension,
                     )
                 ):
-                    self.m = GUIs.editmask.editMask(self.flist_in[i])
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
                     self.m.show()
                     self.m.exec()
                 else:
@@ -503,7 +503,7 @@ class inspectionWindow_20max(QDialog):
                         filename + "_manual" + extension,
                     )
                 ):
-                    self.m = GUIs.editmask.editMask(self.flist_in[i])
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
                     self.m.show()
                     self.m.exec()
                 else:
@@ -643,6 +643,6 @@ class inspectionWindow_20max(QDialog):
 
     def openEditor(self, i):
         print(f"Opening Editor for Image {i}")
-        self.m = GUIs.editmask.editMask(self.flist_in[self.start + i])
+        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour="watershed")
         self.m.show()
         self.m.exec()
