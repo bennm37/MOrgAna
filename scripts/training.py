@@ -85,5 +85,5 @@ if __name__ == "__main__":
     # model_folders = [os.path.abspath(i) for i in model_folders]
     # for model_folder in model_folders:
     #     train(model_folder)
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean"
+    model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
     train_model(model_folder)

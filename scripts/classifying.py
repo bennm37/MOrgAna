@@ -8,9 +8,13 @@ from morgana.DatasetTools import io as ioDT
 import morgana.DatasetTools.multiprocessing.istarmap
 from morgana.MLModel import io as ioML
 from morgana.MLModel import predict
+import re
+
+def natural_key(text):
+    return [int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]
 
 
-def predict_single_image(f_in, classifier, scaler, params, deep=False):
+def predict_single_image(f_in, classifier, scaler, params, deep=True):
 
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
@@ -87,8 +91,43 @@ def predict_batch(image_folders, model_folder, deep=False):
         print("All images done!")
 
 
-if __name__ == "__main__":
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean"
+def predict_folders_(image_folder_nested, model_folder):
     classifier, scaler, params = ioML.load_model(model_folder, deep=True)
-    image_folders = [f"{model_folder}/data"]
-    predict_batch(image_folders, model_folder, deep=True) # will crash is deep is incorrect
+
+    for folder in os.listdir(image_folder_nested):
+        folder_path = os.path.join(image_folder_nested, folder)
+        
+        # Ensure it's a folder
+        if os.path.isdir(folder_path):
+            # Iterate over each ROI subfolder
+            for roi_subfolder in os.listdir(folder_path):
+                roi_path = os.path.join(folder_path, roi_subfolder)
+                
+                # Ensure it's a subfolder
+                if os.path.isdir(roi_path):
+                    # List all images in the ROI subfolder
+                    image_files = sorted([f for f in os.listdir(roi_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))], key=natural_key)
+                    if not os.path.exists(roi_path+'/result_segmentation'):
+                        os.mkdir(roi_path+'/result_segmentation')
+
+                    # Copy selected images to the destination folder
+                    for image in image_files:
+                        src_image_path = os.path.join(roi_path, image)
+                        
+                        #new_image_name = f"{folder}_{image}"
+                        print(f"working with {src_image_path}")
+                        predict_single_image(src_image_path, classifier, scaler, params)
+
+                        #dst_image_path = os.path.join(dst_dir, new_image_name)
+                        #shutil.copy(src_image_path, dst_image_path)
+
+
+
+if __name__ == "__main__":
+    model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
+    image_folder_nested = "/Users/perezg/Documents/data/2024/240924_organo_segment/240930_saving"
+    predict_folders_(image_folder_nested, model_folder)
+    #classifier, scaler, params = ioML.load_model(model_folder, deep=True)
+    #image_folders = [f"{model_folder}/data"]
+    #predict_batch(image_folders, model_folder, deep=True) # will crash is deep is incorrect
+
