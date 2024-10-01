@@ -6,7 +6,7 @@ Created on Wed Apr  3 10:57:50 2019
 @author: ngritti
 """
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QElapsedTimer
 from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QDialog, QPushButton, QLabel
 from matplotlib.figure import Figure
@@ -41,7 +41,6 @@ class makeManualMask(QDialog):
         self.setWindowTitle("Manual mask: " + file_in)
         QApplication.setStyle("Material")
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
-
         self.file_in = file_in
         self.subfolder = subfolder
         self.fn = fn
@@ -70,6 +69,7 @@ class makeManualMask(QDialog):
         self.img = img[0]
         self.lineType = "spline"
         self.snipStart = None
+        self.dragPoint = None
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         self.plotImage()
@@ -78,7 +78,7 @@ class makeManualMask(QDialog):
         self.canvas.setFocus()
         self.button = QPushButton("Save mask")
         self.button.clicked.connect(self.saveMask)
-        self.message = "press k to see keyboard shorcuts"
+        self.updateMessage("press k to see keyboard shorcuts")
         print(self.message)
         self.ax.set_title(self.message)
         self.keyboardShorcutsWindow = None
@@ -92,6 +92,13 @@ class makeManualMask(QDialog):
         self.__cid_button_release = self.canvas.mpl_connect("button_release_event", self.__button_release_callback)
         self.__cid_motion = self.canvas.mpl_connect('motion_notify_event', self.__motion_notify_callback)
 
+    def notify(self, receiver, event):
+        self.t.start()
+        ret = QApplication.notify(self, receiver, event)
+        if(self.t.elapsed() > 10):
+            print(f"processing event type {event.type()} for object {receiver.objectName()} " 
+                  f"took {self.t.elapsed()}ms")
+        return ret
 
     def plotImage(self):
         """plot some random stuff"""
@@ -118,7 +125,7 @@ class makeManualMask(QDialog):
         points = np.vstack((x, y)).T
         roi_path = MplPath(poly_verts)
         mask = 1 * roi_path.contains_points(points).reshape((ny, nx))
-        self.message = f"Saved Mask: Area = {np.sum(mask)}"
+        self.updateMessage(f"Saved Mask: Area = {np.sum(mask)}")
         print(self.message)
         self.ax.set_title(self.message)
         folder, filename = os.path.split(self.file_in)
@@ -145,6 +152,12 @@ class makeManualMask(QDialog):
         else:
             self.line.set_data(*plot_coords.T)
         self.canvas.draw()
+
+    def updateMessage(self, message, draw=True):
+        self.message = message
+        self.ax.set_title(self.message)
+        if draw:
+            self.canvas.draw()
 
     def find_closest_edge_indices(self, x, y):
         c = self.coords
@@ -197,7 +210,7 @@ class makeManualMask(QDialog):
                             _, index2 = self.find_closest_edge_indices(x, y)
                             self.updateLine(np.insert(self.coords, index2, [x, y], axis=0))
                         except ValueError:
-                            self.message = "Invalid Point: The given coordinates do not form a valid polygon."
+                            self.updateMessage("Invalid Point: The given coordinates do not form a valid polygon.")
                             print(self.message)
                             self.ax.set_title(self.message)     
                     else:
@@ -243,7 +256,6 @@ class makeManualMask(QDialog):
                     coords = self.coords.copy()
                     coords[self.dragPoint] = [x,y]
                     self.updateLine(coords)
-            self.canvas.draw()
 
     def __button_release_callback(self, event):
         if event.inaxes == self.ax:
@@ -251,64 +263,64 @@ class makeManualMask(QDialog):
             if self.mode == "drag":
                 self.updateLine(self.coords)
                 self.dragPoint=None
-            self.canvas.draw()
 
     def __motion_notify_callback(self, event):
-        if event.inaxes == self.ax:
-            x, y = int(event.xdata), int(event.ydata)
-            if self.mode == "snip" and self.snipStart is not None:
-                self.snipLine.set_data([self.snipStart[0], x], [self.snipStart[1], y])
-                outside = self.find_outside_points(x, y)
-                outsidePoints = self.coords[outside]
-                self.snipPoints.set_data(*outsidePoints.T)
-            else:
-                self.snipLine.set_data([], [])
-                self.snipPoints.set_data([], [])
-            if self.mode == "drag" and self.dragPoint is not None:
-                    coords = self.coords.copy()
-                    coords[self.dragPoint] = [x,y]
-                    self.updateLine(coords, storePrevious=False)
-            self.canvas.draw()
+        if self.mode == "drag" or self.mode == "snip":
+            if event.inaxes == self.ax:
+                x, y = int(event.xdata), int(event.ydata)
+                if self.mode == "snip" and self.snipStart is not None:
+                    self.snipLine.set_data([self.snipStart[0], x], [self.snipStart[1], y])
+                    outside = self.find_outside_points(x, y)
+                    outsidePoints = self.coords[outside]
+                    self.snipPoints.set_data(*outsidePoints.T)
+                    self.canvas.draw()
+                else:
+                    self.snipLine.set_data([], [])
+                    self.snipPoints.set_data([], [])
+                if self.mode == "drag" and self.dragPoint is not None:
+                        coords = self.coords.copy()
+                        coords[self.dragPoint] = [x,y]
+                        self.updateLine(coords, storePrevious=False)
+                
 
     def __key_press_callback(self, event):
         if event.key == " ":
             self.mode = "snip"
             self.snipStart = None
-            self.message = f"Mode changed to {self.mode}"
+            self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "a":
             self.mode = "add"
-            self.message = f"Mode changed to {self.mode}"
+            self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "i":
             self.mode = "insert"
-            self.message = f"Mode changed to {self.mode}"
+            self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "d":
             self.mode = "drag"
-            self.message = f"Mode changed to {self.mode}"
+            self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "o":
             last = self.lineType
             if self.lineType=="polygon":
                 self.lineType = "spline"
             else:
                 self.lineType = "polygon"
-            self.message = f"linetype toggled from {last} to {self.lineType}"
+            self.updateMessage(f"linetype toggled from {last} to {self.lineType}", draw=False)
             self.updateLine(self.coords)
         elif event.key == "c":
             self.updateLine(np.empty((0, 2)))
-            self.message = "Cleared points"
+            self.updateMessage("Cleared points")
         elif event.key == "z":
             if len(self.previousCoords)>0:
+                self.updateMessage("Undo", draw=False)
                 self.updateLine(self.previousCoords.pop())
                 self.previousCoords.pop()
-                self.canvas.draw()
-                self.message = "Undo"
             else:
-                self.message = "Nothing to undo."
+                self.updateMessage("Nothing to undo.")
         elif event.key == "s":
             self.saveMask()
-            self.message = "Mask saved"
+            self.updateMessage("Mask saved")
         elif event.key == "q":
+            self.updateMessage("Quitting")
             self.close()
-            self.message = "Quitting"
         elif event.key == "k":
             if self.keyboardShorcutsWindow is None:
                 self.keyboardShorcutsWindow = keyboardShortcuts(self)
@@ -321,9 +333,6 @@ class makeManualMask(QDialog):
                 self.keyboardShorcutsWindow = None
         else:
             pass
-        print(self.message)
-        self.ax.set_title(self.message)
-        self.canvas.draw()
 
 class keyboardShortcuts(QDialog):
     def __init__(self, parent=None, wsize=(200,200)):

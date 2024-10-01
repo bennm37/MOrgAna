@@ -10,20 +10,16 @@ import PyQt5.QtWidgets
 from morgana.GUIs import inspection
 from morgana.DatasetTools.segmentation import io as ioSeg
 from morgana.DatasetTools import io as ioDT
+import cProfile
 
 parent_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model_copy"
 image_folders = ["/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy/data"]
 
-if __name__ == "__main__":
+def run():
     app = PyQt5.QtWidgets.QApplication(sys.argv)
-
     for image_folder in image_folders:
-
-    ### compute parent folder as absolute path
         image_folder = os.path.abspath(image_folder)
-
         ("\n-------------" + image_folder + "------------\n")
-
         flist_in = ioDT.get_image_list(image_folder)
         n_imgs = len(flist_in)
         if os.path.exists(
@@ -48,10 +44,15 @@ if __name__ == "__main__":
             thinnings,
             smoothings,
         )
-
         w = inspection.inspectionWindow_20max(image_folder, parent=None, start=0, stop=20)
         w.show()
         app.exec()
     app.quit()
 
+if __name__ == "__main__":
+    with cProfile.Profile() as pr:
+        run()
+    pr.print_stats(sort="time")
+    pr.dump_stats("profile_results")
+    
 
