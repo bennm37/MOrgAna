@@ -138,6 +138,9 @@ class makeManualMask(QDialog):
     def updateLine(self, coords, storePrevious=True):
         if storePrevious:
             self.previousCoords.append(self.coords)
+        if len(coords)>1 and np.all(coords[-1]==coords[-2]):
+            while np.all(coords[-1]==coords[-2]):
+                coords = coords[:-1]
         self.coords = coords.copy()
         self.points.set_data(*self.coords.T)
         if len(self.coords)>0:
