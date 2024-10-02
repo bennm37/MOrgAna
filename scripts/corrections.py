@@ -65,5 +65,4 @@ def correct_folder(image_folder_nested):
             correct_folder(folder_path)
 
 if __name__ == "__main__":
-    # correct("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean/data")
-    correct_folder("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean")
+    correct_folder("/Users/nicholb/Dropbox/Anqi/Intership/data_organoids/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1")

@@ -41,7 +41,6 @@ utils_postprocessing
 """
 warnings.filterwarnings("ignore")
 
-
 class inspectionWindow_20max(QDialog):
     def __init__(self, imageFolder, parent=None, start=None, stop=None):
         super(inspectionWindow_20max, self).__init__(parent)
@@ -284,7 +283,6 @@ class inspectionWindow_20max(QDialog):
 
         txt = self.masksAll.currentText()
         idx = ["ignore", "classifier", "watershed", "manual"].index(txt)
-
         self.chosen_masks = [["i", "c", "w", "m"][idx] for i in range(self.n_imgs)]
         self.down_shapes = [self.downScaleAll.value() for i in range(self.n_imgs)]
         self.thinnings = [self.thinningAll.value() for i in range(self.n_imgs)]
@@ -642,7 +640,10 @@ class inspectionWindow_20max(QDialog):
             self.smoothingSpaces[i].setValue(self.smoothings[self.start + i])
 
     def openEditor(self, i):
+        txt = self.maskTypeSpaces[i].currentText()
+        self.maskTypeSpaces[i].setCurrentIndex(3)
+        self.chosen_masks[i] = "m"
+        # self.remake()
         print(f"Opening Editor for Image {i}")
-        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour="watershed")
-        self.m.show()
+        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour=txt)
         self.m.exec()

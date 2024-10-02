@@ -23,6 +23,7 @@ import cv2
 from shapely.geometry import Point, Polygon, LineString
 import matplotlib as mpl
 from matplotlib.path import Path as MplPath
+from shapely.geometry import Polygon
 
 warnings.filterwarnings("ignore")
 
@@ -52,14 +53,16 @@ class makeManualMask(QDialog):
             self.coords = np.empty((0,2))
             self.mode = "add"
         else:
-            self.mode = "insert"
-            if initial_contour=="watershed":
-                mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_watershed.tif')}")
-            elif initial_contour=="classifier":
+            self.mode = "drag"
+            if initial_contour=="classifier":
                 mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_classifier.tif')}")
+            else:
+                mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_watershed.tif')}")
             polygons = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
             if len(polygons) >=2:
-                raise NotImplementedError("Multiple contours found in initial mask")
+                areas = [Polygon(p[:,0,:]).area for p in polygons]
+                self.coords = polygons[np.argmax(areas)][:,0,:]
+                # raise Warning("More than one contour found. Using largest.")
             else:
                 self.coords = polygons[0][:,0,:]
                 self.coords = self.coords[::stride]

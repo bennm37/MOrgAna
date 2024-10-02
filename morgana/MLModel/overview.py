@@ -50,33 +50,16 @@ def alpha_overlay(img, overlay):
             img[:,:,color] * (1 - alpha_overlay)
     return img
 
-def create_icons_alpha(imgs, classifiers, watersheds, cc=[255,0,0,100], wc=[0,255,255,50], size=200):
-    cc, wc = np.array(cc), np.array(wc)
-    n_img = len(imgs)
-    icons = [0.0 for i in range(n_img)]
-    for i in range(n_img):
-        img = np.array(imgs[i] / 256.0).astype(np.uint8)
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        vmin, vmax = np.percentile(img, 1.0), np.percentile(img, 99.0)
-        img = np.clip(img, vmin, vmax)
-        img = 255*(img - vmin) / (vmax - vmin)
-        img = img.astype(np.uint8)
-        classifier = classifiers[i][:,:,np.newaxis] * cc[np.newaxis, np.newaxis, :]
-        watershed = watersheds[i][:,:,np.newaxis] * wc[np.newaxis, np.newaxis, :]
-        img = cv2.resize(img, (size, size))
-        classifier = cv2.resize(classifier, (size, size))
-        watershed = cv2.resize(watershed, (size, size))
-        icon = alpha_overlay(img, classifier)
-        icon = alpha_overlay(icon, watershed)
-        icons[i] = icon
-    return icons
-
 def create_icons(imgs, classifiers, watersheds, cc=[255,0,0], wc=[0,255,255], size=200):
     cc, wc = np.array(cc), np.array(wc)
     n_img = len(imgs)
     icons = [0.0 for i in range(n_img)]
     for i in range(n_img):
-        img = np.array(imgs[i] / 256.0).astype(np.uint8)
+        if np.max(imgs[i]) > 255:
+            img = np.array(img / 256.0) # assumes 16 bit
+        else:
+            img = np.array(imgs[i])
+        img = img.astype(np.uint8)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         vmin, vmax = np.percentile(img, 1.0), np.percentile(img, 99.0)
         img = np.clip(img, vmin, vmax)
