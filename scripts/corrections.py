@@ -13,7 +13,8 @@ from morgana.DatasetTools import io as ioDT
 import cProfile
 
 
-def run(image_folder):
+def correct(image_folder):
+    """Opens the inspector for the segmentation results in a folder."""
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     image_folder = os.path.abspath(image_folder)
     ("\n-------------" + image_folder + "------------\n")
@@ -46,7 +47,23 @@ def run(image_folder):
     app.exec()
     app.quit()
 
+def correct_folder(image_folder_nested):
+    """Opens the inspector for the segmentation results in a folder and all its subfolders."""
+    flist = os.listdir(image_folder_nested)
+    tifs = [f for f in flist if f.endswith(".tif")]
+    if len(tifs) > 0:
+        if "result_segmentation" in flist:
+            print("Correcting folder: " + image_folder_nested)
+            correct(image_folder_nested)
+            return
+        else:
+            print("No segmentation results found for folder: " + image_folder_nested)
+            return
+    for folder in flist:
+        folder_path = os.path.join(image_folder_nested, folder)
+        if os.path.isdir(folder_path):
+            correct_folder(folder_path)
+
 if __name__ == "__main__":
-    run("/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small")
-
-
+    # correct("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean/data")
+    correct_folder("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean")

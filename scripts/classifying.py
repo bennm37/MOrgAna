@@ -91,83 +91,28 @@ def predict_batch(image_folders, model_folder, deep=False):
         print("All images done!")
 
 
-def predict_folders_(image_folder_nested, model_folder):
+def predict_folders(image_folder_nested, model_folder):
     classifier, scaler, params = ioML.load_model(model_folder, deep=True)
-
     for folder in os.listdir(image_folder_nested):
         folder_path = os.path.join(image_folder_nested, folder)
-        
-        # Ensure it's a folder
         if os.path.isdir(folder_path):
-            # Iterate over each ROI subfolder
             for roi_subfolder in os.listdir(folder_path):
                 roi_path = os.path.join(folder_path, roi_subfolder)
-                
-                # Ensure it's a subfolder
                 if os.path.isdir(roi_path):
-                    # List all images in the ROI subfolder
                     image_files = sorted([f for f in os.listdir(roi_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))], key=natural_key)
                     if not os.path.exists(roi_path+'/result_segmentation'):
                         os.mkdir(roi_path+'/result_segmentation')
-
-                    # Copy selected images to the destination folder
                     for image in image_files:
                         src_image_path = os.path.join(roi_path, image)
-                        
                         print(f"working with {src_image_path}")
                         predict_single_image(src_image_path, classifier, scaler, params)
 
 
 
-def predict_folders_batch(image_folder_nested, model_folder, deep=True):
-    classifier, scaler, params = ioML.load_model(model_folder, deep=True)
-    
-    list_images= []
-
-    for folder in os.listdir(image_folder_nested):
-        folder_path = os.path.join(image_folder_nested, folder)
-        
-        # Ensure it's a folder
-        if os.path.isdir(folder_path):
-            # Iterate over each ROI subfolder
-            for roi_subfolder in os.listdir(folder_path):
-                roi_path = os.path.join(folder_path, roi_subfolder)
-                
-                # Ensure it's a subfolder
-                if os.path.isdir(roi_path):
-                    # List all images in the ROI subfolder
-                    image_files = sorted([os.path.join(roi_path,f) for f in os.listdir(roi_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))], key=natural_key)
-                    list_images.extend(image_files)
-                    if not os.path.exists(roi_path+'/result_segmentation'):
-                        os.mkdir(roi_path+'/result_segmentation')
-    
-    N_img = len(list_images)
-    N_cores = np.clip(int(0.8 * multiprocessing.cpu_count()), 1, None)
-    pool = multiprocessing.Pool(N_cores)
-    _ = list(
-        tqdm.tqdm(
-            pool.istarmap(
-                predict_single_image,
-                zip(
-                    list_images,
-                    repeat(classifier),
-                    repeat(scaler),
-                    repeat(params),
-                    repeat(deep),
-                ),
-            ),
-            total=N_img,
-        )
-    )
-    
-
-
-
-
 if __name__ == "__main__":
     model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
-    image_folder_nested = "/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small"
-    predict_folders_batch(image_folder_nested, model_folder)
+    image_folder_nested = "/Users/perezg/Documents/data/2024/240924_organo_segment/240930_saving"
+    predict_folders(image_folder_nested, model_folder)
     #classifier, scaler, params = ioML.load_model(model_folder, deep=True)
     #image_folders = [f"{model_folder}/data"]
     #predict_batch(image_folders, model_folder, deep=True) # will crash is deep is incorrect
