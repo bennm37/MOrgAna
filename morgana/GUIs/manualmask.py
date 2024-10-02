@@ -18,6 +18,7 @@ import numpy as np
 import sys, warnings, os
 from skimage.io import imread, imsave
 from scipy.interpolate import splprep, splev
+from scipy.integrate import simps
 import cv2
 from shapely.geometry import Point, Polygon, LineString
 import matplotlib as mpl
@@ -26,7 +27,7 @@ from matplotlib.path import Path as MplPath
 warnings.filterwarnings("ignore")
 
 class makeManualMask(QDialog):
-    MODES = ["snip","add","insert", "drag"]
+    MODES = ["snip","add","insert", "drag", "draw"]
     def __init__(
         self,
         file_in,
@@ -40,6 +41,7 @@ class makeManualMask(QDialog):
         super(makeManualMask, self).__init__(parent)
         self.setWindowTitle("Manual mask: " + file_in)
         QApplication.setStyle("Material")
+        self.stride = stride
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
         self.file_in = file_in
         self.subfolder = subfolder
@@ -61,6 +63,7 @@ class makeManualMask(QDialog):
             else:
                 self.coords = polygons[0][:,0,:]
                 self.coords = self.coords[::stride]
+        self.drawCoords = np.empty((0,2))
         self.previousCoords = []
         if len(img.shape) == 2:
             img = np.expand_dims(img, 0)
@@ -114,6 +117,8 @@ class makeManualMask(QDialog):
         self.points = self.ax.plot(*self.coords.T, "or")[0]
         self.snipLine = self.ax.plot([], [], "--k", linewidth=1)[0]
         self.snipPoints = self.ax.plot([], [], "ok")[0]
+        self.drawLine = self.ax.plot([], [], "tab:blue")[0]
+        self.penDown = False
         self.canvas.draw()
 
     def saveMask(self):
@@ -241,7 +246,6 @@ class makeManualMask(QDialog):
                         self.updateLine(np.empty((0, 2)))
 
             elif self.mode == "snip":
-                # draw a line and remove all points on the outside of the line
                 if (event.button == 1):
                     if self.snipStart is None:
                         self.snipStart = [x, y]
@@ -254,21 +258,51 @@ class makeManualMask(QDialog):
             elif self.mode == "drag":
                 closest = np.argmin(np.linalg.norm(self.coords - [x, y], axis=1))
                 dist = np.linalg.norm(self.coords[closest] - [x, y])
-                if dist < 10:
+                if dist < 20:
                     self.dragPoint = closest
                     coords = self.coords.copy()
                     coords[self.dragPoint] = [x,y]
                     self.updateLine(coords)
+            elif self.mode == "draw":
+                self.drawCoords = np.vstack((self.drawCoords, [x, y]))
+                self.penDown = True
 
     def __button_release_callback(self, event):
         if event.inaxes == self.ax:
-            # x, y = int(event.xdata), int(event.ydata)
             if self.mode == "drag":
                 self.updateLine(self.coords)
                 self.dragPoint=None
+            elif self.mode == "draw":
+                self.penDown = False
+                # remove duplicates from drawCoords but retain order 
+                unique, inds = np.unique(self.drawCoords, axis=0, return_index=True)
+                coords = unique[np.argsort(inds)]
+                if len(unique)>3:
+                    tck = splprep(coords.T, s=0, per=True)
+                    n_spline = 1000
+                    u_new = np.linspace(0, 1, n_spline)
+                    x_new, y_new = splev(u_new, tck[0])
+                    coords = np.vstack((x_new, y_new)).T
+                    start = np.argmin(np.linalg.norm(coords-self.drawCoords[0], axis=1))
+                    if len(self.coords)>0:
+                        end_point_dist = np.linalg.norm(self.coords[-1]-coords[start:],axis=1)
+                        if np.any(end_point_dist>20):
+                            start += np.where(end_point_dist>20)[0].min()
+                    end = np.argmin(np.linalg.norm(coords-self.drawCoords[-1], axis=1))
+                    length = simps(np.linalg.norm(np.diff(coords, axis=0), axis=1))
+                    ds = length/n_spline
+                    stride = int(np.ceil(20/ds)) # stride so that every point is at least 10 pixels apart
+                    if start<end:
+                        coords = coords[start:end:stride]
+                    else:
+                        coords = np.vstack((coords[start::stride], coords[:end:stride]))
+                self.drawCoords = np.empty((0,2))
+                self.drawLine.set_data([], [])
+                self.canvas.draw()
+                self.updateLine(np.vstack((self.coords, coords)))
 
     def __motion_notify_callback(self, event):
-        if self.mode == "drag" or self.mode == "snip":
+        if self.mode in ["snip", "drag", "draw"]:
             if event.inaxes == self.ax:
                 x, y = int(event.xdata), int(event.ydata)
                 if self.mode == "snip" and self.snipStart is not None:
@@ -284,7 +318,10 @@ class makeManualMask(QDialog):
                         coords = self.coords.copy()
                         coords[self.dragPoint] = [x,y]
                         self.updateLine(coords, storePrevious=False)
-                
+                elif self.mode == "draw" and self.penDown:
+                    self.drawCoords = np.vstack((self.drawCoords, [x, y]))
+                    self.drawLine.set_data(*self.drawCoords.T)
+                    self.canvas.draw()
 
     def __key_press_callback(self, event):
         if event.key == " ":
@@ -299,6 +336,9 @@ class makeManualMask(QDialog):
             self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "d":
             self.mode = "drag"
+            self.updateMessage(f"Mode changed to {self.mode}")
+        elif event.key == "p":
+            self.mode = "draw"
             self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "o":
             last = self.lineType
@@ -347,6 +387,7 @@ class keyboardShortcuts(QDialog):
         self.commands = ["a - add mode. Sequentially add and remove points using click and right click",
                          "i - insert mode. Insert and remove points using click and right click",
                          "d - drag mode. Drag a point to a new position",
+                         "p - draw mode. Draw a curve section."
                          "space - snip mode. Remove points outside the snip line.",
                          "c - clear all points."
                          "z - undo.",
