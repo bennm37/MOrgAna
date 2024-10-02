@@ -47,6 +47,6 @@ def run(image_folder):
     app.quit()
 
 if __name__ == "__main__":
-    run("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean/data")
+    run("/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small")
 
 
