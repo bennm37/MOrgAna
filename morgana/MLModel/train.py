@@ -83,10 +83,8 @@ def generate_training_set(
         edge = Y - morphology.binary_dilation(Y, morphology.disk(1))
         edge = morphology.binary_dilation(edge, morphology.disk(edge_size))
         Y = 1 * np.logical_or(Y, edge) + edge
-
         # flatten the images and normalize to -std:+std
         X = np.transpose(np.reshape(X, (X.shape[0], np.prod(shape))))  # flatten the image feature
-
         Y = np.reshape(Y, np.prod(shape))  # flatten the ground truth
         edge = np.reshape(edge, np.prod(shape))  # flatten the edge
 
@@ -112,12 +110,10 @@ def generate_training_set(
     scaler = preprocessing.RobustScaler(quantile_range=(1.0, 99.0))
     scaler.fit(X_train)  # normalize
     X_train = scaler.transform(X_train)
-
     # shuffle the training set
     p = np.random.permutation(X_train.shape[0])
     X_train = X_train[p, :]
     Y_train = Y_train[p]
-
     return X_train, Y_train, weight_train, scaler
 
 

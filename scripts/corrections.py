@@ -45,7 +45,7 @@ def correct(image_folder):
     w = inspection.inspectionWindow_20max(image_folder, parent=None, start=0, stop=20)
     w.show()
     app.exec()
-    app.quit()
+    app.quit(q)
 
 def correct_folder(image_folder_nested):
     """Opens the inspector for the segmentation results in a folder and all its subfolders."""
@@ -66,3 +66,6 @@ def correct_folder(image_folder_nested):
 
 if __name__ == "__main__":
     correct_folder("/Users/nicholb/Dropbox/Anqi/Intership/data_organoids/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1")
+    # correct_folder("/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean")
+
+

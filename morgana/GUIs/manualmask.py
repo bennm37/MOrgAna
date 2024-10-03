@@ -63,9 +63,11 @@ class makeManualMask(QDialog):
                 areas = [Polygon(p[:,0,:]).area for p in polygons]
                 self.coords = polygons[np.argmax(areas)][:,0,:]
                 # raise Warning("More than one contour found. Using largest.")
-            else:
+            elif len(polygons) == 1:
                 self.coords = polygons[0][:,0,:]
                 self.coords = self.coords[::stride]
+            else:
+                self.coords = np.empty((0,2))
         self.drawCoords = np.empty((0,2))
         self.previousCoords = []
         if len(img.shape) == 2:

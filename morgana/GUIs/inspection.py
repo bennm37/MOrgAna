@@ -437,13 +437,14 @@ class inspectionWindow_20max(QDialog):
                     )
 
             elif self.chosen_masks[i] == "m":
-                if not os.path.exists(
+                while not os.path.exists(
                     os.path.join(
                         self.imageFolder,
                         "result_segmentation",
                         filename + "_manual" + extension,
                     )
                 ):
+                    print(f"Manual mask for {filename} not found!")
                     self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
                     self.m.show()
                     self.m.exec()
