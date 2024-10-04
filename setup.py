@@ -39,6 +39,7 @@ setuptools.setup(
         "openpyxl",
         "opencv-python",
         "shapely",
+        "git+https://github.com/tensorflow/examples.git", # TODO test this
     ],
     # extras_require = {
     #     'all':  ["tensorflow-gpu>=2.0.0"]

@@ -54,7 +54,8 @@ def create_GT_mask(model_folder):
 
 if __name__ == "__main__":
     # folder containing trainingSet
-    model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean"
+    # model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     create_GT_mask(model_folder)
     app.quit()

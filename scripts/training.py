@@ -12,6 +12,7 @@ import time
 from morgana.DatasetTools import io as ioDT
 from morgana.MLModel import io as ioML
 from morgana.MLModel import train
+import matplotlib.pyplot as plt
 
 ### define parameters for feature generation for network training
 sigmas = [1.0, 5.0, 15.0]
@@ -50,19 +51,24 @@ def train_model(model_folder):
             os.path.split(f[1])[-1],
         )
     print("##### Generating training set...")
-    X, Y, w, scaler = train.generate_training_set(
+    scaler, train_batches = train.generate_training_set_unet(
         img_train,
         [g.astype(np.uint8) for g in gt_train],
-        sigmas=sigmas,
-        down_shape=downscaling,
+        downscaled_size=(512,512),
         edge_size=edge_size,
-        fraction=pxl_extract_fraction,
-        feature_mode=feature_type,
-        bias=pxl_extract_bias,
     )
+    for images, masks in train_batches.take(2):
+        sample_image, sample_mask = images[0], masks[0]
+        sample_image = (scaler.inverse_transform(sample_image.reshape(-1,1)).reshape(*sample_image.shape)/256).astype(np.uint8)
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        ax[0].imshow(sample_image)
+        ax[0].axis("off")
+        ax[1].imshow(sample_mask)
+        ax[1].axis("off")
+        plt.show()
     print("##### Training model...")
     start = time.time()
-    classifier = train.train_classifier(X, Y, w, deep=deep)
+    classifier = train.train_unet(train_batches)
     print("Models trained in %.3f seconds." % (time.time() - start))
     ioML.save_model(
         model_folder,
@@ -85,5 +91,5 @@ if __name__ == "__main__":
     # model_folders = [os.path.abspath(i) for i in model_folders]
     # for model_folder in model_folders:
     #     train(model_folder)
-    model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy"
     train_model(model_folder)
