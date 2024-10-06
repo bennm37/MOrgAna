@@ -7,7 +7,6 @@ import tensorflow as tf
 
 tf.experimental.numpy.experimental_enable_numpy_behavior()
 
-
 class Augment(tf.keras.layers.Layer):
     def __init__(self, seed=None):
         super(Augment, self).__init__()
@@ -208,7 +207,7 @@ def train_classifier(X, Y, w, deep=False, epochs=50, n_classes=3, hidden=(350, 5
     return classifier
 
 
-def train_unet(dataset, epochs=50, n_output_classes=3, input_shape=(512, 512, 3)):
+def train_unet(train_batches, epochs=50, n_output_classes=3, steps_per_epoch=10, input_shape=(512, 512, 3)):
     from tensorflow.keras import layers
     from tensorflow import keras
     from tensorflow_examples.models.pix2pix import pix2pix
@@ -252,12 +251,15 @@ def train_unet(dataset, epochs=50, n_output_classes=3, input_shape=(512, 512, 3)
             filters=output_channels, kernel_size=3, strides=2, padding="same"
         )  # 64x64 -> 128x128
         x = last(x)
+
         return tf.keras.Model(inputs=inputs, outputs=x)
 
-    model = unet_model(output_channels=1)
+    model = unet_model(output_channels=n_output_classes)
     model.compile(
         optimizer="adam",
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=["accuracy"],
     )
-    model.fit(dataset, epochs=epochs)
+    # model.fit(train_batches, epochs=epochs)
+    model_history = model.fit(train_batches, epochs=epochs, steps_per_epoch=steps_per_epoch)
+    return model

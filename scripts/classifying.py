@@ -33,7 +33,7 @@ def predict_single_image(f_in, classifier, scaler, params, deep=True):
     img = img[0]
 
     if not os.path.exists(new_name_classifier):
-        pred, prob = predict.predict_image(
+        pred, prob = predict.predict_image_unet(
             img,
             classifier,
             scaler,
@@ -110,10 +110,9 @@ def predict_folders(image_folder_nested, model_folder):
 
 
 if __name__ == "__main__":
-    model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
-    image_folder_nested = "/Users/perezg/Documents/data/2024/240924_organo_segment/240930_saving"
+    # model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
+    # image_folder_nested = "/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small"
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy"
+    image_folder_nested = f"{model_folder}/data"
     predict_folders(image_folder_nested, model_folder)
-    #classifier, scaler, params = ioML.load_model(model_folder, deep=True)
-    #image_folders = [f"{model_folder}/data"]
-    #predict_batch(image_folders, model_folder, deep=True) # will crash is deep is incorrect
 

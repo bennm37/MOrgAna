@@ -56,6 +56,8 @@ def train_model(model_folder):
         [g.astype(np.uint8) for g in gt_train],
         downscaled_size=(512,512),
         edge_size=edge_size,
+        buffer_size=100,
+        batch_size=40,
     )
     for images, masks in train_batches.take(2):
         sample_image, sample_mask = images[0], masks[0]
@@ -68,7 +70,7 @@ def train_model(model_folder):
         plt.show()
     print("##### Training model...")
     start = time.time()
-    classifier = train.train_unet(train_batches)
+    classifier = train.train_unet(train_batches, epochs=50)
     print("Models trained in %.3f seconds." % (time.time() - start))
     ioML.save_model(
         model_folder,
@@ -85,11 +87,5 @@ def train_model(model_folder):
     print("##### Model saved!")
 
 if __name__ == "__main__":
-    # TRAIN MULTIPLE MODELS
-    # parent_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model"
-    # model_folders = glob.glob(os.path.join(parent_folder, "model_*"))
-    # model_folders = [os.path.abspath(i) for i in model_folders]
-    # for model_folder in model_folders:
-    #     train(model_folder)
     model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy"
     train_model(model_folder)

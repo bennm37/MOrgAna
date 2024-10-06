@@ -4,7 +4,7 @@ from skimage import transform, morphology, measure, segmentation
 from sklearn.metrics import classification_report
 from skimage.io import imread, imsave
 import scipy.ndimage as ndi
-
+import tensorflow as tf
 from morgana.ImageTools import processfeatures
 
 
@@ -135,6 +135,11 @@ def predict_image(
 
     return y_pred.astype(np.uint8), y_prob
 
+def predict_image_unet(_input, scaler, model, image_size=(512,512)):
+    resized = tf.image.resize(_input.reshape(*_input.shape,1), image_size)
+    scaled = scaler.transform(resized.reshape(-1,1)).reshape(*image_size, 1)
+    rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
+    return model.predict(rgb)
 
 def make_watershed(mask, edge, new_shape_scale=-1):
 
