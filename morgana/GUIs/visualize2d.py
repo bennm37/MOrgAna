@@ -42,9 +42,7 @@ class visualization_2d(QWidget):
         self.data = data
         self.windowTitle = windowTitle
         if not background:
-            self.background = [
-                [[0 for row in gastruloid] for gastruloid in group] for group in data
-            ]
+            self.background = [[[0 for row in gastruloid] for gastruloid in group] for group in data]
         else:
             self.background = background
 
@@ -153,9 +151,7 @@ class visualization_2d(QWidget):
 
         self.figure.clear()
         axs = [self.figure.add_subplot(121), self.figure.add_subplot(122)]
-        self.figure.subplots_adjust(
-            top=0.9, right=0.95, left=0.15, bottom=0.2, hspace=0.1, wspace=0.3
-        )
+        self.figure.subplots_adjust(top=0.9, right=0.95, left=0.15, bottom=0.2, hspace=0.1, wspace=0.3)
         for ax in axs:
             ax.ticklabel_format(axis="x", style="sci", scilimits=(2, 2))
             ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 2))
@@ -351,10 +347,6 @@ class visualization_2d(QWidget):
                         name = os.path.splitext(name)[0] + ".tif"
 
                 # convert the image into int16 with the right brightness and contrast
-                if self.percs[0] != None:
-                    self.tif_data = (
-                        (2**16 - 1)
-                        * (self.tif_data - self.percs[0])
-                        / (self.percs[1] - self.percs[0])
-                    )
+                if self.percs[0] is not None:
+                    self.tif_data = (2**16 - 1) * (self.tif_data - self.percs[0]) / (self.percs[1] - self.percs[0])
                 imsave(name + "", img.astype(np.uint16))

@@ -145,9 +145,7 @@ def compute_anchor_points(ma, _slice, down_shape, smoothing=1000):
     ### find edge point to the right
     tg = np.array([0, 0]).astype(float)
     for i in range(1, n):
-        tg += (anchors[::-1][0] - anchors[::-1][i]) / (
-            np.sqrt(np.sum((anchors[::-1][0] - anchors[::-1][i]) ** 2))
-        )
+        tg += (anchors[::-1][0] - anchors[::-1][i]) / (np.sqrt(np.sum((anchors[::-1][0] - anchors[::-1][i]) ** 2)))
     tg = tg / 5
     tg = tg / np.sqrt(np.sum(tg**2))
     edge_point_R = anchors[-1]

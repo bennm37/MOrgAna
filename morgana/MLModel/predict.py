@@ -39,9 +39,7 @@ def create_features(
     # compute all features and normalize images
     start = time.time()
     _input = processfeatures.get_features(_input, sigmas, feature_mode=feature_mode)
-    _input = np.transpose(
-        np.reshape(_input, (_input.shape[0], np.prod(shape)))
-    )  # flatten the image
+    _input = np.transpose(np.reshape(_input, (_input.shape[0], np.prod(shape))))  # flatten the image
     if check_time:
         print(time.time() - start)
 
@@ -106,7 +104,7 @@ def predict_image(
     feature_mode="ilastik",
     check_time=False,
     model="logistic",
-):  
+):
     original_shape = _input.shape
     n_classes = 3  # len(classifier.classes_)
     _input, shape = create_features(
@@ -118,9 +116,7 @@ def predict_image(
         feature_mode=feature_mode,
         check_time=check_time,
     )
-    y_pred, y_prob = predict(
-        _input, classifier, gt=gt, check_time=check_time, shape=shape, model=model
-    )
+    y_pred, y_prob = predict(_input, classifier, gt=gt, check_time=check_time, shape=shape, model=model)
     y_pred, y_prob = reshape(
         y_pred,
         y_prob,
@@ -132,11 +128,13 @@ def predict_image(
 
     return y_pred.astype(np.uint8), y_prob
 
-def predict_image_unet(_input, scaler, model, image_size=(512,512)):
-    resized = tf.image.resize(_input.reshape(*_input.shape,1), image_size)
-    scaled = scaler.transform(resized.reshape(-1,1)).reshape(*image_size, 1)
+
+def predict_image_unet(_input, scaler, model, image_size=(512, 512)):
+    resized = tf.image.resize(_input.reshape(*_input.shape, 1), image_size)
+    scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*image_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
     return model.predict(rgb)
+
 
 def make_watershed(mask, edge, new_shape_scale=-1):
 
@@ -166,9 +164,7 @@ def make_watershed(mask, edge, new_shape_scale=-1):
         weighted_cm = np.array(weighted_cm).astype(np.uint16)
 
     # move marker to local minimum
-    loc_m = morphology.local_minima(
-        np.clip(edge, 0, np.percentile(edge, 90)), connectivity=10, indices=True
-    )
+    loc_m = morphology.local_minima(np.clip(edge, 0, np.percentile(edge, 90)), connectivity=10, indices=True)
     loc_m = np.transpose(np.stack([loc_m[0], loc_m[1]]))
     dist = [np.linalg.norm(weighted_cm - m) for m in loc_m]
     if len(dist) > 0:
@@ -187,9 +183,7 @@ def make_watershed(mask, edge, new_shape_scale=-1):
     # perform watershed
     labels = segmentation.watershed(edge, markers.astype(np.uint))
     labels = (labels - np.min(labels)) / (np.max(labels) - np.min(labels))
-    labels = transform.resize(labels, original_shape, order=0, preserve_range=False).astype(
-        np.uint8
-    )
+    labels = transform.resize(labels, original_shape, order=0, preserve_range=False).astype(np.uint8)
 
     return labels
 
@@ -197,12 +191,8 @@ def make_watershed(mask, edge, new_shape_scale=-1):
 def predict_image_from_file(f_in, classifier, scaler, params, model="logistic"):
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
-    new_name_classifier = os.path.join(
-        parent, "result_segmentation", filename + "_classifier" + file_extension
-    )
-    new_name_watershed = os.path.join(
-        parent, "result_segmentation", filename + "_watershed" + file_extension
-    )
+    new_name_classifier = os.path.join(parent, "result_segmentation", filename + "_classifier" + file_extension)
+    new_name_watershed = os.path.join(parent, "result_segmentation", filename + "_watershed" + file_extension)
     img = imread(f_in)
     if len(img.shape) == 2:
         img = np.expand_dims(img, 0)

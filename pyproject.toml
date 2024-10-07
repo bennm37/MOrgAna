@@ -1,6 +1,48 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "morgana"
+version = "0.1.2"
+description = "A machine learning tool to segment organoids."
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+    { name = "Nicola Gritti", email = "gritti@embl.es" }
+]
+license = { text = "MIT" }
+requires-python = "<3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+urls = { "Homepage" = "https://github.com/LabTrivedi/MOrgAna" }
+
+dependencies = [
+    "tensorflow>=2.10",
+    "matplotlib",
+    "numpy>=1.20",
+    "pyqt5",
+    "scikit-image>=0.18",
+    "pandas>=1.2",
+    "joblib>=1.0",
+    "scikit-learn>=0.24",
+    "scipy>=1.6",
+    "tqdm>=4.60",
+    "openpyxl",
+    "opencv-python",
+    "shapely"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-qt",
+    "pytest-qt-app",
+    "black",
+    "flake8"
+]
+
+[tool.setuptools.packages.find]
+include = ["*"]

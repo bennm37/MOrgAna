@@ -60,4 +60,3 @@ if __name__ == "__main__":
     create_GT_mask(model_folder)
     app.quit()
     print("All binary masks/ground truth images found. Move to the next step.")
-

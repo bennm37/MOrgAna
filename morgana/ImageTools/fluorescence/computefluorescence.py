@@ -52,7 +52,7 @@ def compute_fluorescence_info(image, mask, f_in, f_ma, prop, parent_folder=""):
     midline = prop["midline"]
     width = prop["meshgrid_width"]
     mesh = prop["meshgrid"]
-    if mesh == None:
+    if mesh is None:
         mesh = meshgrid.compute_meshgrid(midline, tangent, width)
 
     for ch in range(N_ch):

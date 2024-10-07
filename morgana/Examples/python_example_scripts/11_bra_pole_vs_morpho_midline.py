@@ -127,15 +127,11 @@ if __name__ == "__main__":
                 ma_straight = map_coordinates(mask, coords_flat, order=0, mode="constant", cval=0).T
                 ma_straight = np.reshape(ma_straight, (mesh_shape[0], mesh_shape[1]))
 
-                fl_straight = map_coordinates(
-                    image[1], coords_flat, order=0, mode="constant", cval=0
-                ).T
+                fl_straight = map_coordinates(image[1], coords_flat, order=0, mode="constant", cval=0).T
                 fl_straight = np.reshape(fl_straight, (mesh_shape[0], mesh_shape[1]))
                 fl_straight_masked = fl_straight * ma_straight
 
-                bf_straight = map_coordinates(
-                    image[0], coords_flat, order=0, mode="constant", cval=0
-                ).T
+                bf_straight = map_coordinates(image[0], coords_flat, order=0, mode="constant", cval=0).T
                 bf_straight = np.reshape(bf_straight, (mesh_shape[0], mesh_shape[1]))
 
                 (length, width) = ma_straight.shape

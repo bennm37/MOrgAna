@@ -37,12 +37,8 @@ def compute_EFA(contour, mode, DEBUG=False):
     for i in range(2, N_points):
         contour.sumdeltaxj[i] = contour.sumdeltaxj[i - 1] + contour.deltax[i - 1]
         contour.sumdeltayj[i] = contour.sumdeltayj[i - 1] + contour.deltay[i - 1]
-        contour.xi[i] = (
-            contour.sumdeltaxj[i] - contour.deltax[i] / contour.deltat[i] * contour.t[i - 1]
-        )
-        contour.epsilon[i] = (
-            contour.sumdeltayj[i] - contour.deltay[i] / contour.deltat[i] * contour.t[i - 1]
-        )
+        contour.xi[i] = contour.sumdeltaxj[i] - contour.deltax[i] / contour.deltat[i] * contour.t[i - 1]
+        contour.epsilon[i] = contour.sumdeltayj[i] - contour.deltay[i] / contour.deltat[i] * contour.t[i - 1]
 
     #    # Eq. 7: : sumDeltaxj, sumDeltayj, xi, epsilon ### does not work.... why???
     #    contour.sumdeltaxj[2:] = sumdeltaxj[1:-1] + deltax[1:-1]
@@ -54,50 +50,37 @@ def compute_EFA(contour, mode, DEBUG=False):
     mode.alpha[0] = contour.x[0]
     mode.gamma[0] = contour.y[0]
     mode.alpha[0] += np.sum(
-        (deltax[1:] / (2.0 * deltat[1:]) * (t[1:] ** 2 - t[:-1] ** 2) + xi[1:] * (t[1:] - t[:-1]))
-        / T
+        (deltax[1:] / (2.0 * deltat[1:]) * (t[1:] ** 2 - t[:-1] ** 2) + xi[1:] * (t[1:] - t[:-1])) / T
     )
     mode.gamma[0] += np.sum(
-        (
-            deltay[1:] / (2.0 * deltat[1:]) * (t[1:] ** 2 - t[:-1] ** 2)
-            + epsilon[1:] * (t[1:] - t[:-1])
-        )
-        / T
+        (deltay[1:] / (2.0 * deltat[1:]) * (t[1:] ** 2 - t[:-1] ** 2) + epsilon[1:] * (t[1:] - t[:-1])) / T
     )
 
     for j in range(1, N_modes):
         mode.alpha[j] = (
             np.sum(
-                deltax[1:]
-                / deltat[1:]
-                * (np.cos(2.0 * j * np.pi * t[1:] / T) - np.cos(2 * j * np.pi * t[:-1] / T))
+                deltax[1:] / deltat[1:] * (np.cos(2.0 * j * np.pi * t[1:] / T) - np.cos(2 * j * np.pi * t[:-1] / T))
             )
             * T
             / (2.0 * j**2 * np.pi**2)
         )
         mode.beta[j] = (
             np.sum(
-                deltax[1:]
-                / deltat[1:]
-                * (np.sin(2.0 * j * np.pi * t[1:] / T) - np.sin(2 * j * np.pi * t[:-1] / T))
+                deltax[1:] / deltat[1:] * (np.sin(2.0 * j * np.pi * t[1:] / T) - np.sin(2 * j * np.pi * t[:-1] / T))
             )
             * T
             / (2.0 * j**2 * np.pi**2)
         )
         mode.gamma[j] = (
             np.sum(
-                deltay[1:]
-                / deltat[1:]
-                * (np.cos(2.0 * j * np.pi * t[1:] / T) - np.cos(2 * j * np.pi * t[:-1] / T))
+                deltay[1:] / deltat[1:] * (np.cos(2.0 * j * np.pi * t[1:] / T) - np.cos(2 * j * np.pi * t[:-1] / T))
             )
             * T
             / (2.0 * j**2 * np.pi**2)
         )
         mode.delta[j] = (
             np.sum(
-                deltay[1:]
-                / deltat[1:]
-                * (np.sin(2.0 * j * np.pi * t[1:] / T) - np.sin(2 * j * np.pi * t[:-1] / T))
+                deltay[1:] / deltat[1:] * (np.sin(2.0 * j * np.pi * t[1:] / T) - np.sin(2 * j * np.pi * t[:-1] / T))
             )
             * T
             / (2.0 * j**2 * np.pi**2)
@@ -194,18 +177,10 @@ def compute_LOCOEFA(mode, DEBUG=False):
         mode.theta[i] = np.arctan2(mode.cprime[i], mode.aprime[i])
 
         # Equation 25: Lambda
-        mode.lambda1[i] = (
-            np.cos(mode.theta[i]) * mode.aprime[i] + np.sin(mode.theta[i]) * mode.cprime[i]
-        )
-        mode.lambda12[i] = (
-            np.cos(mode.theta[i]) * mode.bprime[i] + np.sin(mode.theta[i]) * mode.dprime[i]
-        )
-        mode.lambda21[i] = (
-            -np.sin(mode.theta[i]) * mode.aprime[i] + np.cos(mode.theta[i]) * mode.cprime[i]
-        )
-        mode.lambda2[i] = (
-            -np.sin(mode.theta[i]) * mode.bprime[i] + np.cos(mode.theta[i]) * mode.dprime[i]
-        )
+        mode.lambda1[i] = np.cos(mode.theta[i]) * mode.aprime[i] + np.sin(mode.theta[i]) * mode.cprime[i]
+        mode.lambda12[i] = np.cos(mode.theta[i]) * mode.bprime[i] + np.sin(mode.theta[i]) * mode.dprime[i]
+        mode.lambda21[i] = -np.sin(mode.theta[i]) * mode.aprime[i] + np.cos(mode.theta[i]) * mode.cprime[i]
+        mode.lambda2[i] = -np.sin(mode.theta[i]) * mode.bprime[i] + np.cos(mode.theta[i]) * mode.dprime[i]
 
         # Equation 32: lambdaplus, lambdaminus
         mode.lambdaplus[i] = (mode.lambda1[i] + mode.lambda2[i]) / 2.0

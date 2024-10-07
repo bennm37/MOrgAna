@@ -1,4 +1,13 @@
-import sys, os, time
+import sys
+import os
+import time
+from skimage.io import imread, imsave
+import MLModel.train
+import MLModel.io
+import MLModel.predict
+import DatasetTools.io
+import scipy.ndimage as ndi
+import numpy as np
 
 sys.path.insert(
     0,
@@ -9,21 +18,10 @@ sys.path.insert(
     ),
 )
 
-from skimage.io import imread, imsave
-import MLModel.train
-import MLModel.io
-import MLModel.predict
-import DatasetTools.io
-import scipy.ndimage as ndi
-
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
 
 ################################################
-modelFolder = "Y:\\Nicola_Gritti\\raw_data\\gastruloids_with_different_cell_number\\2021-01-28_gastr_cell_number_BraGFP2i_vs_BraGFPmKO21i\\deep_test\\model_braGFP_48h_deep"
-imageFolder = "Y:\\Nicola_Gritti\\raw_data\\gastruloids_with_different_cell_number\\2021-01-28_gastr_cell_number_BraGFP2i_vs_BraGFPmKO21i\\deep_test\\data\\init_150cells"
+modelFolder = "Y:\\Nicola_Gritti\\raw_data\\gastruloids_with_different_cell_number\\2021-01-28_gastr_cell_number_BraGFP2i_vs_BraGFPmKO21i\\deep_test\\model_braGFP_48h_deep"  # noqa E501
+imageFolder = "Y:\\Nicola_Gritti\\raw_data\\gastruloids_with_different_cell_number\\2021-01-28_gastr_cell_number_BraGFP2i_vs_BraGFPmKO21i\\deep_test\\data\\init_150cells"  # noqa E501
 
 modelFolder = "C:\\Users\\nicol\\Documents\\Repos\\deep_test\\model_braGFP_48h_deep"
 imageFolder = "C:\\Users\\nicol\\Documents\\Repos\\deep_test\\data\\init_150cells"
@@ -183,7 +181,9 @@ for f_in in flist_in:
     start = time.time()
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
-    new_name = os.path.join(parent, "result_segmentation", filename + "_watershed" + file_extension)
+    new_name = os.path.join(
+        parent, "result_segmentation", filename + "_watershed" + file_extension
+    )
     imsave(new_name, mask_final, check_contrast=False)
     print("Saved mask1 in:", time.time() - start)
 

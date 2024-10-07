@@ -108,9 +108,7 @@ else:
     ]
 
 # extract data from all the folders
-data_all, keys = arrangemorphodata.collect_morpho_data(
-    groups, morphoKeys, computeMorpho, maskType, Timelapse
-)
+data_all, keys = arrangemorphodata.collect_morpho_data(groups, morphoKeys, computeMorpho, maskType, Timelapse)
 quantifier = []
 app = PyQt5.QtWidgets.QApplication(sys.argv)
 

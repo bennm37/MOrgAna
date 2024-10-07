@@ -1,28 +1,25 @@
-import numpy as np
-import os, tqdm
-from skimage.io import imread, imsave
-from skimage import img_as_bool
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib.colors import LinearSegmentedColormap
-from textwrap import wrap
-from matplotlib import rc
-
-rc("font", size=17)
-rc("font", family="Arial")
-# rc('font', serif='Times')
-rc("pdf", fonttype=42)
-# rc('text', usetex=True)
-from itertools import repeat
-import multiprocessing
-
 from morgana.DatasetTools import io
 from morgana.DatasetTools.morphology import computemorphology
 from morgana.DatasetTools.morphology import io as ioMorph
 from morgana.ImageTools import compositeImageJ
 from morgana.ImageTools.morphology import meshgrid
 
-#########################################################################################################################
+import numpy as np
+import os
+import tqdm
+from skimage.io import imread, imsave
+from skimage import img_as_bool
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from textwrap import wrap
+from matplotlib import rc
+
+rc("font", size=17)
+rc("font", family="Arial")
+rc("pdf", fonttype=42)
+
+
+#######################################################################################################################
 
 
 def generate_overview_finalMask(input_folder, chosen, saveFig=True, downshape=1, autoclose=False):
@@ -40,7 +37,7 @@ def generate_overview_finalMask(input_folder, chosen, saveFig=True, downshape=1,
     fig, ax = plt.subplots(figsize=(3 * ncols, 3 * nrows), nrows=nrows, ncols=ncols)
     ax = ax.flatten()
 
-    # ### multiprocess
+    # # multiprocess
     # file_names = [[flist_in[i],flist_ma[i]] for i in range(n_img)]
     # N_cores = np.clip( int(0.8 * multiprocessing.cpu_count()),1,None )
 
@@ -55,7 +52,7 @@ def generate_overview_finalMask(input_folder, chosen, saveFig=True, downshape=1,
     # imgs = [data[0] for data in data_list]
     # masks = [data[1] for data in data_list]
 
-    ### normal for loop
+    # normal for loop
     imgs = [0.0 for i in range(n_img)]
     masks = [0.0 for i in range(n_img)]
     for i in tqdm.tqdm(range(n_img)):
@@ -67,7 +64,7 @@ def generate_overview_finalMask(input_folder, chosen, saveFig=True, downshape=1,
         imgs[i] = img[0, ::downshape, ::downshape]
         masks[i] = imread(flist_ma[i])[::downshape, ::downshape].astype(float)
 
-    ### plotting
+    # plotting
     for i in tqdm.tqdm(range(n_img)):
 
         _, filename = os.path.split(flist_in[i])
@@ -109,7 +106,7 @@ def generate_overview_finalMask(input_folder, chosen, saveFig=True, downshape=1,
     return fig
 
 
-#########################################################################################################################
+#######################################################################################################################
 
 
 def generate_composite_movie_cropped(input_folder):
@@ -306,7 +303,7 @@ def createCompositeOverview(folder, keep_open=True, create_tif=True):
     generate_composite_img_cropped(folder, keep_open=keep_open)
 
 
-##########################################################################################################################
+####################################################################################################################
 
 
 def generate_meshgrid_img_cropped(input_folder, keep_open=True):
@@ -379,4 +376,4 @@ def createMeshgridOverview(input_folder, keep_open=True):
     generate_meshgrid_img_cropped(input_folder, keep_open=keep_open)
 
 
-##########################################################################################################################
+#######################################################################################################################

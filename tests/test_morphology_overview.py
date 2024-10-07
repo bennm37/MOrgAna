@@ -1,5 +1,10 @@
 import os
-from morgana.DatasetTools.morphology import overview as overviewDT
+from morgana.DatasetTools.morphology import io as ioMorph
+from morgana.ImageTools import compositeImageJ
+import numpy as np
+import tqdm
+from skimage.io import imread, imsave
+from matplotlib import rc
 
 if __name__ == "__main__":
 
@@ -8,29 +13,12 @@ if __name__ == "__main__":
     """
     overviewDT.createCompositeOverview(input_folder)
     """
-    import numpy as np
-    import os, tqdm
-    from skimage.io import imread, imsave
-    from skimage import img_as_bool
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    from matplotlib.colors import LinearSegmentedColormap
-    from textwrap import wrap
-    from matplotlib import rc
 
     rc("font", size=17)
     rc("font", family="Arial")
     # rc('font', serif='Times')
     rc("pdf", fonttype=42)
     # rc('text', usetex=True)
-    from itertools import repeat
-    import multiprocessing
-
-    from morgana.DatasetTools import io
-    from morgana.DatasetTools.morphology import computemorphology
-    from morgana.DatasetTools.morphology import io as ioMorph
-    from morgana.ImageTools import compositeImageJ
-    from morgana.ImageTools.morphology import meshgrid
 
     print("### Generating recap composite movie at", input_folder)
 

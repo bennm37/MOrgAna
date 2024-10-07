@@ -44,9 +44,7 @@ def pad_images(img, pad_width_ratio=0.1):
         )
 
         # padding values
-        padding_values = np.clip(mean + std * np.random.randn(*i_padded.shape), 0, None).astype(
-            np.uint16
-        )
+        padding_values = np.clip(mean + std * np.random.randn(*i_padded.shape), 0, None).astype(np.uint16)
         padding_values[layer_width[0] : -layer_width[0], layer_width[1] : -layer_width[1]] = 0
 
         # sum the padding values

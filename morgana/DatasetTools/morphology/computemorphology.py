@@ -27,9 +27,7 @@ def compute_morphological_info(input_folder, compute_meshgrid=False, compute_loc
     masks_folder = os.path.join(input_folder, "result_segmentation")
     _, chosen_mask, down_shape, _, _ = ioSeg.load_segmentation_params(masks_folder)
     flist_in = [flist_all[i] for i in range(len(flist_all)) if chosen_mask[i] != "i"]
-    flist_ma = io.get_image_list(
-        masks_folder, string_filter="_finalMask.tif", mode_filter="include"
-    )
+    flist_ma = io.get_image_list(masks_folder, string_filter="_finalMask.tif", mode_filter="include")
 
     # measure region props for every mask
     N_img = len(flist_in)

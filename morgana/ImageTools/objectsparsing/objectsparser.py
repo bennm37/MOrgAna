@@ -56,9 +56,7 @@ def parsing_images(image_folder, mask_folder, identifier_string, objects_at_bord
         os.mkdir(masks_output_dir)
 
     # read images and append if only one channel is present/only greyscale image
-    flist_in = io.get_image_list(
-        image_folder, string_filter=identifier_string, mode_filter="exclude"
-    )
+    flist_in = io.get_image_list(image_folder, string_filter=identifier_string, mode_filter="exclude")
     img_to_crop = []
     for f in flist_in:
         img = imread(f)
@@ -69,9 +67,7 @@ def parsing_images(image_folder, mask_folder, identifier_string, objects_at_bord
         img_to_crop.append(img)
 
     # read masks/groundtruth
-    flist_mask = io.get_image_list(
-        mask_folder, string_filter=identifier_string, mode_filter="include"
-    )
+    flist_mask = io.get_image_list(mask_folder, string_filter=identifier_string, mode_filter="include")
 
     # check that number of masks = number of images, otherwise, find missing mask
     if len(flist_in) != len(flist_mask):
@@ -111,9 +107,7 @@ def parsing_images(image_folder, mask_folder, identifier_string, objects_at_bord
                     or max_row == labeled_mask.shape[1]
                 ):
                     # leave cropped objects_at_border in a different folder
-                    border_objects_output_dir = os.path.join(
-                        images_output_dir, "objects_at_image_border"
-                    )
+                    border_objects_output_dir = os.path.join(images_output_dir, "objects_at_image_border")
                     if not os.path.isdir(border_objects_output_dir):
                         os.mkdir(border_objects_output_dir)
                     cropped_mask = mask_to_crop[i][min_row:max_row, min_col:max_col]
@@ -154,9 +148,7 @@ def parsing_images(image_folder, mask_folder, identifier_string, objects_at_bord
     chosen_mask = "user input"
     down_shape = 0.5
     thinning = smoothing = "N.A."
-    ioSeg.save_segmentation_params(
-        masks_output_dir, filenames, chosen_mask, down_shape, thinning, smoothing
-    )
+    ioSeg.save_segmentation_params(masks_output_dir, filenames, chosen_mask, down_shape, thinning, smoothing)
     # compute morphological information
     # props = computemorphology.compute_morphological_info(
     #         images_output_dir, compute_meshgrid=False)

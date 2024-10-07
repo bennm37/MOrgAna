@@ -49,9 +49,7 @@ image_folders = [os.path.join(parent_folder, i) for i in image_folders]
 
 channel = 1  # number of fluorescence channel in order of channels in tif file.
 Timelapse = True  # Do images in the folder belong to a timelapse?
-distribution = (
-    "RADprofile"  # choice of profile: 'Average','APprofile','LRprofile','RADprofile','ANGprofile'
-)
+distribution = "RADprofile"  # choice of profile: 'Average','APprofile','LRprofile','RADprofile','ANGprofile'
 
 
 # Define number of groups/number of conditions and the image subfolders that belong to each group
@@ -108,19 +106,13 @@ if not PyQt5.QtWidgets.QApplication.instance():
 else:
     app = PyQt5.QtWidgets.QApplication.instance()
 if ndim == 0:
-    quantifier.append(
-        visualize0d.visualization_0d(data_key, distributionType, background=data_bckg)
-    )
+    quantifier.append(visualize0d.visualization_0d(data_key, distributionType, background=data_bckg))
     quantifier[-1].show()
 elif ndim == 1:
-    quantifier.append(
-        visualize1d.visualization_1d(data_key, distributionType, background=data_bckg)
-    )
+    quantifier.append(visualize1d.visualization_1d(data_key, distributionType, background=data_bckg))
     quantifier[-1].show()
 elif ndim == 2:
-    quantifier.append(
-        visualize2d.visualization_2d(data_key, distributionType, background=data_bckg)
-    )
+    quantifier.append(visualize2d.visualization_2d(data_key, distributionType, background=data_bckg))
     quantifier[-1].show()
 app.exec()
 app.quit()

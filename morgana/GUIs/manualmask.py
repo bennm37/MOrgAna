@@ -27,8 +27,10 @@ from shapely.geometry import Polygon
 
 warnings.filterwarnings("ignore")
 
+
 class makeManualMask(QDialog):
-    MODES = ["snip","add","insert", "drag", "draw"]
+    MODES = ["snip", "add", "insert", "drag", "draw"]
+
     def __init__(
         self,
         file_in,
@@ -50,25 +52,25 @@ class makeManualMask(QDialog):
         img = imread(file_in)
         input_folder, filename = os.path.split(file_in)
         if initial_contour is None:
-            self.coords = np.empty((0,2))
+            self.coords = np.empty((0, 2))
             self.mode = "add"
         else:
             self.mode = "drag"
-            if initial_contour=="classifier":
+            if initial_contour == "classifier":
                 mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_classifier.tif')}")
             else:
                 mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_watershed.tif')}")
             polygons = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-            if len(polygons) >=2:
-                areas = [Polygon(p[:,0,:]).area for p in polygons]
-                self.coords = polygons[np.argmax(areas)][:,0,:]
+            if len(polygons) >= 2:
+                areas = [Polygon(p[:, 0, :]).area for p in polygons]
+                self.coords = polygons[np.argmax(areas)][:, 0, :]
                 # raise Warning("More than one contour found. Using largest.")
             elif len(polygons) == 1:
-                self.coords = polygons[0][:,0,:]
+                self.coords = polygons[0][:, 0, :]
                 self.coords = self.coords[::stride]
             else:
-                self.coords = np.empty((0,2))
-        self.drawCoords = np.empty((0,2))
+                self.coords = np.empty((0, 2))
+        self.drawCoords = np.empty((0, 2))
         self.previousCoords = []
         if len(img.shape) == 2:
             img = np.expand_dims(img, 0)
@@ -92,20 +94,22 @@ class makeManualMask(QDialog):
         self.keyboardShorcutsWindow = None
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
-        layout.addWidget(self.button)   
+        layout.addWidget(self.button)
         self.setLayout(layout)
         self.resize(wsize[0], wsize[1])
-        self.__cid_key_press = self.canvas.mpl_connect('key_press_event', self.__key_press_callback)
+        self.__cid_key_press = self.canvas.mpl_connect("key_press_event", self.__key_press_callback)
         self.__cid_button_press = self.canvas.mpl_connect("button_press_event", self.__button_press_callback)
         self.__cid_button_release = self.canvas.mpl_connect("button_release_event", self.__button_release_callback)
-        self.__cid_motion = self.canvas.mpl_connect('motion_notify_event', self.__motion_notify_callback)
+        self.__cid_motion = self.canvas.mpl_connect("motion_notify_event", self.__motion_notify_callback)
 
     def notify(self, receiver, event):
         self.t.start()
         ret = QApplication.notify(self, receiver, event)
-        if(self.t.elapsed() > 10):
-            print(f"processing event type {event.type()} for object {receiver.objectName()} " 
-                  f"took {self.t.elapsed()}ms")
+        if self.t.elapsed() > 10:
+            print(
+                f"processing event type {event.type()} for object {receiver.objectName()} "
+                f"took {self.t.elapsed()}ms"
+            )
         return ret
 
     def plotImage(self):
@@ -140,24 +144,23 @@ class makeManualMask(QDialog):
         self.ax.set_title(self.message)
         folder, filename = os.path.split(self.file_in)
         filename, extension = os.path.splitext(filename)
-        if self.fn == None:
+        if self.fn is None:
             self.fn = filename + "_manual" + extension
         imsave(os.path.join(folder, self.subfolder, self.fn), mask.astype(np.uint16))
 
-    
     def updateLine(self, coords, storePrevious=True):
         if storePrevious:
             self.previousCoords.append(self.coords)
-        if len(coords)>1 and np.all(coords[-1]==coords[-2]):
-            while np.all(coords[-1]==coords[-2]):
+        if len(coords) > 1 and np.all(coords[-1] == coords[-2]):
+            while np.all(coords[-1] == coords[-2]):
                 coords = coords[:-1]
         self.coords = coords.copy()
         self.points.set_data(*self.coords.T)
-        if len(self.coords)>0:
+        if len(self.coords) > 0:
             plot_coords = np.vstack([self.coords.copy(), self.coords[0]])
         else:
             plot_coords = self.coords
-        if len(self.coords)>3 and self.lineType=="spline":
+        if len(self.coords) > 3 and self.lineType == "spline":
             tck = splprep(plot_coords.T, s=0, per=True)
             u_new = np.linspace(0, 1, 1000)
             x_new, y_new = splev(u_new, tck[0])
@@ -174,7 +177,7 @@ class makeManualMask(QDialog):
 
     def find_closest_edge_indices(self, x, y):
         c = self.coords
-        target_point = Point([x,y])
+        target_point = Point([x, y])
         polygon = Polygon(c)
         if not polygon.is_valid:
             raise ValueError("The given coordinates do not form a valid polygon.")
@@ -197,7 +200,8 @@ class makeManualMask(QDialog):
         np.cross = lambda v1, v2: v1[0] * v2[1] - v1[1] * v2[0]
         centroid_cross = np.cross(snipDirection, centroid - ss)
         oppositeInds = [
-            i for i, point in enumerate(c)
+            i
+            for i, point in enumerate(c)
             if (np.cross(snipDirection, np.array(point) - ss) * centroid_cross) < 0
             and 0 <= np.dot(np.array(point) - ss, snipDirection) / np.dot(snipDirection, snipDirection) <= 1
         ]
@@ -208,16 +212,16 @@ class makeManualMask(QDialog):
             x, y = int(event.xdata), int(event.ydata)
             n_p = len(self.coords)
             if self.mode == "add":
-                if (event.button == 1):
+                if event.button == 1:
                     self.updateLine(np.vstack((self.coords, [x, y])))
-                elif (event.button == 3):
-                    if (n_p > 1):
+                elif event.button == 3:
+                    if n_p > 1:
                         self.updateLine(self.coords[:-1])
-                    if (n_p == 1):
+                    if n_p == 1:
                         self.updateLine(np.empty((0, 2)))
             elif self.mode == "insert":
-                if (event.button == 1):
-                    if n_p >=3:
+                if event.button == 1:
+                    if n_p >= 3:
                         try:
                             # find the closest side in the polygon to the clicked position
                             _, index2 = self.find_closest_edge_indices(x, y)
@@ -225,33 +229,32 @@ class makeManualMask(QDialog):
                         except ValueError:
                             self.updateMessage("Invalid Point: The given coordinates do not form a valid polygon.")
                             print(self.message)
-                            self.ax.set_title(self.message)     
+                            self.ax.set_title(self.message)
                     else:
                         self.updateLine(np.vstack((self.coords, [x, y])))
-                    
 
-                elif (event.button == 3):
-                    if (n_p > 1):
+                elif event.button == 3:
+                    if n_p > 1:
                         # find the closest point and remove it
                         closest = np.argmin(np.linalg.norm(self.coords - [x, y], axis=1))
                         dist = np.linalg.norm(self.coords[closest] - [x, y])
                         if dist < 10:
                             self.updateLine(np.delete(self.coords, closest, axis=0))
-                    if (n_p == 1):
+                    if n_p == 1:
                         self.updateLine(np.empty((0, 2)))
 
-                elif (event.button == 3):
-                    if (n_p > 1):
+                elif event.button == 3:
+                    if n_p > 1:
                         # find the closest point and remove it
                         closest = np.argmin(np.linalg.norm(self.coords - [x, y], axis=1))
                         dist = np.linalg.norm(self.coords[closest] - [x, y])
                         if dist < 10:
                             self.updateLine(np.delete(self.coords, closest, axis=0))
-                    if (n_p == 1):
+                    if n_p == 1:
                         self.updateLine(np.empty((0, 2)))
 
             elif self.mode == "snip":
-                if (event.button == 1):
+                if event.button == 1:
                     if self.snipStart is None:
                         self.snipStart = [x, y]
                     else:
@@ -266,7 +269,7 @@ class makeManualMask(QDialog):
                 if dist < 20:
                     self.dragPoint = closest
                     coords = self.coords.copy()
-                    coords[self.dragPoint] = [x,y]
+                    coords[self.dragPoint] = [x, y]
                     self.updateLine(coords)
             elif self.mode == "draw":
                 self.drawCoords = np.vstack((self.drawCoords, [x, y]))
@@ -276,32 +279,32 @@ class makeManualMask(QDialog):
         if event.inaxes == self.ax:
             if self.mode == "drag":
                 self.updateLine(self.coords)
-                self.dragPoint=None
+                self.dragPoint = None
             elif self.mode == "draw":
                 self.penDown = False
-                # remove duplicates from drawCoords but retain order 
+                # remove duplicates from drawCoords but retain order
                 unique, inds = np.unique(self.drawCoords, axis=0, return_index=True)
                 coords = unique[np.argsort(inds)]
-                if len(unique)>3:
+                if len(unique) > 3:
                     tck = splprep(coords.T, s=0, per=True)
                     n_spline = 1000
                     u_new = np.linspace(0, 1, n_spline)
                     x_new, y_new = splev(u_new, tck[0])
                     coords = np.vstack((x_new, y_new)).T
-                    start = np.argmin(np.linalg.norm(coords-self.drawCoords[0], axis=1))
-                    if len(self.coords)>0:
-                        end_point_dist = np.linalg.norm(self.coords[-1]-coords[start:],axis=1)
-                        if np.any(end_point_dist>20):
-                            start += np.where(end_point_dist>20)[0].min()
-                    end = np.argmin(np.linalg.norm(coords-self.drawCoords[-1], axis=1))
+                    start = np.argmin(np.linalg.norm(coords - self.drawCoords[0], axis=1))
+                    if len(self.coords) > 0:
+                        end_point_dist = np.linalg.norm(self.coords[-1] - coords[start:], axis=1)
+                        if np.any(end_point_dist > 20):
+                            start += np.where(end_point_dist > 20)[0].min()
+                    end = np.argmin(np.linalg.norm(coords - self.drawCoords[-1], axis=1))
                     length = simps(np.linalg.norm(np.diff(coords, axis=0), axis=1))
-                    ds = length/n_spline
-                    stride = int(np.ceil(20/ds)) # stride so that every point is at least 10 pixels apart
-                    if start<end:
+                    ds = length / n_spline
+                    stride = int(np.ceil(20 / ds))  # stride so that every point is at least 10 pixels apart
+                    if start < end:
                         coords = coords[start:end:stride]
                     else:
                         coords = np.vstack((coords[start::stride], coords[:end:stride]))
-                self.drawCoords = np.empty((0,2))
+                self.drawCoords = np.empty((0, 2))
                 self.drawLine.set_data([], [])
                 self.canvas.draw()
                 self.updateLine(np.vstack((self.coords, coords)))
@@ -320,9 +323,9 @@ class makeManualMask(QDialog):
                     self.snipLine.set_data([], [])
                     self.snipPoints.set_data([], [])
                 if self.mode == "drag" and self.dragPoint is not None:
-                        coords = self.coords.copy()
-                        coords[self.dragPoint] = [x,y]
-                        self.updateLine(coords, storePrevious=False)
+                    coords = self.coords.copy()
+                    coords[self.dragPoint] = [x, y]
+                    self.updateLine(coords, storePrevious=False)
                 elif self.mode == "draw" and self.penDown:
                     self.drawCoords = np.vstack((self.drawCoords, [x, y]))
                     self.drawLine.set_data(*self.drawCoords.T)
@@ -347,7 +350,7 @@ class makeManualMask(QDialog):
             self.updateMessage(f"Mode changed to {self.mode}")
         elif event.key == "o":
             last = self.lineType
-            if self.lineType=="polygon":
+            if self.lineType == "polygon":
                 self.lineType = "spline"
             else:
                 self.lineType = "polygon"
@@ -357,7 +360,7 @@ class makeManualMask(QDialog):
             self.updateLine(np.empty((0, 2)))
             self.updateMessage("Cleared points")
         elif event.key == "z":
-            if len(self.previousCoords)>0:
+            if len(self.previousCoords) > 0:
                 self.updateMessage("Undo", draw=False)
                 self.updateLine(self.previousCoords.pop())
                 self.previousCoords.pop()
@@ -382,32 +385,31 @@ class makeManualMask(QDialog):
         else:
             pass
 
+
 class keyboardShortcuts(QDialog):
-    def __init__(self, parent=None, wsize=(200,200)):
+    def __init__(self, parent=None, wsize=(200, 200)):
         self.parent = parent
         super(keyboardShortcuts, self).__init__()
         self.setWindowTitle("Keyboard Shortcuts")
         QApplication.setStyle("Material")
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
-        self.commands = ["a - add mode. Sequentially add and remove points using click and right click",
-                         "i - insert mode. Insert and remove points using click and right click",
-                         "d - drag mode. Drag a point to a new position",
-                         "p - draw mode. Draw a curve section."
-                         "space - snip mode. Remove points outside the snip line.",
-                         "c - clear all points."
-                         "z - undo.",
-                         "o - toggle linetype from spline to polygon",
-                         "s - save mask.",
-                         "k - show keyboard shorcuts.",
-                         "q - quit",
-                         ]
+        self.commands = [
+            "a - add mode. Sequentially add and remove points using click and right click",
+            "i - insert mode. Insert and remove points using click and right click",
+            "d - drag mode. Drag a point to a new position",
+            "p - draw mode. Draw a curve section." "space - snip mode. Remove points outside the snip line.",
+            "c - clear all points." "z - undo.",
+            "o - toggle linetype from spline to polygon",
+            "s - save mask.",
+            "k - show keyboard shorcuts.",
+            "q - quit",
+        ]
         self.labels = [QLabel(command) for command in self.commands]
         self.layout = QVBoxLayout()
         [self.layout.addWidget(label) for label in self.labels]
         self.setLayout(self.layout)
         self.resize(wsize[0], wsize[1])
-        
-    
+
     def keyPressEvent(self, event):
         if event.key == "k":
             self.parent.__key_press_callback(event)

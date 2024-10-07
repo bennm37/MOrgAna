@@ -32,7 +32,7 @@ exclude_folder = []
 image_folders = [g for g in folder_names if not g in model_folders_name + exclude_folder]
 image_folders = [os.path.join(parent_folder, i) for i in image_folders]
 
-model = "logistic" 
+model = "logistic"
 
 ###############################################################################
 

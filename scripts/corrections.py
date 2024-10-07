@@ -20,11 +20,9 @@ def correct(image_folder):
     ("\n-------------" + image_folder + "------------\n")
     flist_in = ioDT.get_image_list(image_folder)
     n_imgs = len(flist_in)
-    if os.path.exists(
-        os.path.join(image_folder, "result_segmentation", "segmentation_params.csv")
-    ):
-        flist_in, chosen_masks, down_shapes, thinnings, smoothings = (
-            ioSeg.load_segmentation_params(os.path.join(image_folder, "result_segmentation"))
+    if os.path.exists(os.path.join(image_folder, "result_segmentation", "segmentation_params.csv")):
+        flist_in, chosen_masks, down_shapes, thinnings, smoothings = ioSeg.load_segmentation_params(
+            os.path.join(image_folder, "result_segmentation")
         )
         flist_in = [os.path.join(image_folder, i) for i in flist_in]
     else:
@@ -47,6 +45,7 @@ def correct(image_folder):
     app.exec()
     app.quit(q)
 
+
 def correct_folder(image_folder_nested):
     """Opens the inspector for the segmentation results in a folder and all its subfolders."""
     flist = os.listdir(image_folder_nested)
@@ -64,7 +63,8 @@ def correct_folder(image_folder_nested):
         if os.path.isdir(folder_path):
             correct_folder(folder_path)
 
+
 if __name__ == "__main__":
-    correct_folder("/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1")
-
-
+    correct_folder(
+        "/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1"
+    )

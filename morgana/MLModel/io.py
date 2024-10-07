@@ -1,4 +1,6 @@
-import joblib, os, json
+import joblib
+import os
+import json
 
 
 def save_model(
@@ -15,19 +17,19 @@ def save_model(
 ):
     """
     save a previously generated machine learning model in the "model_folder" input path:
-    * model_folder\classifier.pkl: logistic classifier model
-    * model_folder\scaler.pkl: scaler used to normalize the trainingset
-    * model_folder\params.json: parameters used for training
+    * model_folder/classifier.pkl: logistic classifier model
+    * model_folder/scaler.pkl: scaler used to normalize the trainingset
+    * model_folder/params.json: parameters used for training
 
     """
 
     # Make it work for Python 2+3 and with Unicode
     try:
-        to_unicode = unicode
+        to_unicode = unicode  # type: ignore
     except NameError:
         to_unicode = str
 
-    if model=="logistic":
+    if model == "logistic":
         joblib.dump(classifier, os.path.join(model_folder, "classifier.pkl"))
     else:
         classifier.save(os.path.join(model_folder, "classifier.keras"))
@@ -56,29 +58,29 @@ def save_model(
 def load_model(model_folder, model="logistic"):
     """
     load a previously saved machine learning model from the "model_folder" input path:
-    * model_folder\classifier.pkl: logistic classifier model
-    * model_folder\scaler.pkl: scaler used to normalize the trainingset
-    * model_folder\params.json: parameters used for training
+    * model_folder/classifier.pkl: logistic classifier model
+    * model_folder/scaler.pkl: scaler used to normalize the trainingset
+    * model_folder/params.json: parameters used for training
 
     """
-    if model=="logistic":
+    if model == "logistic":
         try:
             classifier = joblib.load(os.path.join(model_folder, "classifier.pkl"))
-        except:
+        except:  # noqa E722 # TODO find the correct exception
             return None, None, None
     else:
         from tensorflow import keras
 
         try:
             classifier = keras.models.load_model(os.path.join(model_folder, "classifier.keras"))
-        except:
+        except:  # noqa E722 # TODO find the correct exception
             return None, None, None
 
     scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
     with open(os.path.join(model_folder, "params.json"), "r") as f:
         params = json.load(f)
 
-    ### patch to take into account the old definition of down_shape
+    # patch to take into account the old definition of down_shape
     if params["down_shape"] == 500:
         params["down_shape"] = 500.0 / 2160.0
     return classifier, scaler, params

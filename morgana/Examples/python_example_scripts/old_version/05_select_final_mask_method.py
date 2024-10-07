@@ -33,11 +33,9 @@ if __name__ == "__main__":
 
         flist_in = ioDT.get_image_list(image_folder)
         n_imgs = len(flist_in)
-        if os.path.exists(
-            os.path.join(image_folder, "result_segmentation", "segmentation_params.csv")
-        ):
-            flist_in, chosen_masks, down_shapes, thinnings, smoothings = (
-                ioSeg.load_segmentation_params(os.path.join(image_folder, "result_segmentation"))
+        if os.path.exists(os.path.join(image_folder, "result_segmentation", "segmentation_params.csv")):
+            flist_in, chosen_masks, down_shapes, thinnings, smoothings = ioSeg.load_segmentation_params(
+                os.path.join(image_folder, "result_segmentation")
             )
             flist_in = [os.path.join(image_folder, i) for i in flist_in]
         else:

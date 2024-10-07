@@ -10,20 +10,17 @@ from morgana.MLModel import io as ioML
 from morgana.MLModel import predict
 import re
 
+
 def natural_key(text):
-    return [int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]
+    return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
 
 
 def predict_single_image(f_in, classifier, scaler, params, model="MLP"):
 
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
-    new_name_classifier = os.path.join(
-        parent, "result_segmentation", filename + "_classifier" + file_extension
-    )
-    new_name_watershed = os.path.join(
-        parent, "result_segmentation", filename + "_watershed" + file_extension
-    )
+    new_name_classifier = os.path.join(parent, "result_segmentation", filename + "_classifier" + file_extension)
+    new_name_watershed = os.path.join(parent, "result_segmentation", filename + "_watershed" + file_extension)
 
     img = imread(f_in)
     if len(img.shape) == 2:
@@ -49,9 +46,7 @@ def predict_single_image(f_in, classifier, scaler, params, model="MLP"):
         imsave(new_name_classifier, pred)
 
     if not os.path.exists(new_name_watershed):
-        mask_final = predict.make_watershed(
-            mask_pred, edge_prob, new_shape_scale=params["down_shape"]
-        )
+        mask_final = predict.make_watershed(mask_pred, edge_prob, new_shape_scale=params["down_shape"])
         imsave(new_name_watershed, mask_final)
 
     return None
@@ -99,14 +94,20 @@ def predict_folders(image_folder_nested, model_folder):
             for roi_subfolder in os.listdir(folder_path):
                 roi_path = os.path.join(folder_path, roi_subfolder)
                 if os.path.isdir(roi_path):
-                    image_files = sorted([f for f in os.listdir(roi_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif'))], key=natural_key)
-                    if not os.path.exists(roi_path+'/result_segmentation'):
-                        os.mkdir(roi_path+'/result_segmentation')
+                    image_files = sorted(
+                        [
+                            f
+                            for f in os.listdir(roi_path)
+                            if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".tif"))
+                        ],
+                        key=natural_key,
+                    )
+                    if not os.path.exists(roi_path + "/result_segmentation"):
+                        os.mkdir(roi_path + "/result_segmentation")
                     for image in image_files:
                         src_image_path = os.path.join(roi_path, image)
                         print(f"working with {src_image_path}")
                         predict_single_image(src_image_path, classifier, scaler, params)
-
 
 
 if __name__ == "__main__":
@@ -115,4 +116,3 @@ if __name__ == "__main__":
     model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy"
     image_folder_nested = f"{model_folder}/data"
     predict_folders(image_folder_nested, model_folder)
-

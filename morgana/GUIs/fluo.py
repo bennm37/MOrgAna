@@ -16,15 +16,14 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar,
 )
 import numpy as np
-import warnings, os, time
+import warnings
+import os
 from skimage.io import imsave
-import scipy.ndimage as ndi
 from matplotlib.figure import Figure
 from scipy.interpolate import interp1d
-import matplotlib as mpl
+from matplotlib import rc
 
 warnings.filterwarnings("ignore")
-from matplotlib import rc
 
 rc("font", size=12)
 rc("font", family="Arial")
@@ -181,7 +180,9 @@ class profileAP_condMode(QWidget):
                     )
                     # subtract background or not
                     if self.bckgBtn.currentText() == "Background":
-                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][self.channel]
+                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][
+                            self.channel
+                        ]
                     if self.bckgBtn.currentText() == "Minimum":
                         profiles_all[i][j][k] -= np.min(profiles_all[i][j][k])
 
@@ -191,8 +192,8 @@ class profileAP_condMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
-                            flat.append(l)
+                        for legend in profiles_all[i][j][k]:  # noqa E741
+                            flat.append(legend)
             percs = np.percentile(np.array(flat), (0.3, 99.7))
             for i in range(n_groups):
                 for j in range(n_folders[i]):
@@ -206,8 +207,8 @@ class profileAP_condMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
-                            flat[i].append(l)
+                        for legend in profiles_all[i][j][k]:  # noqa E741
+                            flat[i].append(legend)
             percs = [np.percentile(np.array(f), (0.3, 99.7)) for f in flat]
             for i in range(n_groups):
                 for j in range(n_folders[i]):
@@ -224,16 +225,19 @@ class profileAP_condMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
-                            flat[i][j].append(l)
-            percs = [[np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat]
+                        for legend in profiles_all[i][j][k]:  # noqa E741
+                            flat[i][j].append(legend)
+            percs = [
+                [np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat
+            ]
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         # print(percs[i][j])
                         profile = np.array(profiles_all[i][j][k])
                         profiles_all[i][j][k] = np.clip(
-                            (profile - percs[i][j][0]) / (percs[i][j][1] - percs[i][j][0]),
+                            (profile - percs[i][j][0])
+                            / (percs[i][j][1] - percs[i][j][0]),
                             0,
                             1.0,
                         )
@@ -262,9 +266,11 @@ class profileAP_condMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        y = np.array(profiles_all[i][j][k])[~np.isnan(profiles_all[i][j][k])]
+                        y = np.array(profiles_all[i][j][k])[
+                            ~np.isnan(profiles_all[i][j][k])
+                        ]
                         n_p = len(y)
-                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2) :]):
+                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2):]):
                             profiles_all[i][j][k] = profiles_all[i][j][k][::-1]
 
         # pad array to the right or left
@@ -288,7 +294,7 @@ class profileAP_condMode(QWidget):
                         constant_values=np.nan,
                     )
 
-        ### make plot
+        # make plot
         lines = []
         for i in range(n_groups):
             # plot this group only if the button is checked
@@ -338,7 +344,7 @@ class profileAP_condMode(QWidget):
 
         # add legend
         if self.legendBtn.isChecked():
-            l = ax.legend(
+            legend = ax.legend(
                 lines,
                 [
                     "Group " + str(i + 1)
@@ -346,7 +352,7 @@ class profileAP_condMode(QWidget):
                     if self.groupPlotBtn[i].isChecked()
                 ],
             )
-            l.get_frame().set_linewidth(0.0)
+            legend.get_frame().set_linewidth(0.0)
 
         self.canvas.draw()
 
@@ -486,7 +492,9 @@ class profileAP_tlMode(QWidget):
                     )
                     # subtract background or not
                     if self.bckgBtn.currentText() == "Background":
-                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][self.channel]
+                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][
+                            self.channel
+                        ]
                     if self.bckgBtn.currentText() == "Minimum":
                         profiles_all[i][j][k] -= np.min(profiles_all[i][j][k])
 
@@ -497,7 +505,7 @@ class profileAP_tlMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
+                        for l in profiles_all[i][j][k]:  # noqa E741
                             flat.append(l)
             percs = np.percentile(np.array(flat), (0.3, 99.7))
             for i in range(n_groups):
@@ -512,7 +520,7 @@ class profileAP_tlMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
+                        for l in profiles_all[i][j][k]:  # noqa E741
                             flat[i].append(l)
             percs = [np.percentile(np.array(f), (0.3, 99.7)) for f in flat]
             for i in range(n_groups):
@@ -530,16 +538,19 @@ class profileAP_tlMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        for l in profiles_all[i][j][k]:
+                        for l in profiles_all[i][j][k]:  # noqa E741
                             flat[i][j].append(l)
-            percs = [[np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat]
+            percs = [
+                [np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat
+            ]
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         # print(percs[i][j])
                         profile = np.array(profiles_all[i][j][k])
                         profiles_all[i][j][k] = np.clip(
-                            (profile - percs[i][j][0]) / (percs[i][j][1] - percs[i][j][0]),
+                            (profile - percs[i][j][0])
+                            / (percs[i][j][1] - percs[i][j][0]),
                             0,
                             1.0,
                         )
@@ -569,9 +580,11 @@ class profileAP_tlMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        y = np.array(profiles_all[i][j][k])[~np.isnan(profiles_all[i][j][k])]
+                        y = np.array(profiles_all[i][j][k])[
+                            ~np.isnan(profiles_all[i][j][k])
+                        ]
                         n_p = len(y)
-                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2) :]):
+                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2):]):
                             profiles_all[i][j][k] = profiles_all[i][j][k][::-1]
 
         # pad array to the right or left
@@ -595,7 +608,7 @@ class profileAP_tlMode(QWidget):
                         constant_values=np.nan,
                     )
 
-        ### make plot
+        # make plot
         # lines = []
         self.figure.clear()
         ax = self.figure.add_subplot(111)
@@ -613,7 +626,11 @@ class profileAP_tlMode(QWidget):
         # prepare blank image
         max_t = np.max([n_gastr[i][j] for j in range(n_folders[i])])
         max_l = np.max(
-            [len(profiles_all[i][j][k]) for j in range(n_folders[i]) for k in range(n_gastr[i][j])]
+            [
+                len(profiles_all[i][j][k])
+                for j in range(n_folders[i])
+                for k in range(n_gastr[i][j])
+            ]
         )
 
         data_mean = np.zeros((max_t, max_l))
@@ -642,7 +659,7 @@ class profileAP_tlMode(QWidget):
     def save_tif(self):
         name, _ = QFileDialog.getSaveFileName(self, "Save Overview File")
         if name != "":
-            ### check file extension: allow to save in other formats, but bias towards tif
+            # check file extension: allow to save in other formats, but bias towards tif
             if os.path.splitext(name)[-1] != ".tif":
                 buttonReply = QMessageBox.question(
                     self,
@@ -653,8 +670,10 @@ class profileAP_tlMode(QWidget):
                     name = os.path.splitext(name)[0] + ".tif"
 
             # convert the image into int16 with the right brightness and contrast
-            if self.percs[0] != None:
+            if self.percs[0] is not None:
                 self.tif_data = (
-                    (2**16 - 1) * (self.tif_data - self.percs[0]) / (self.percs[1] - self.percs[0])
+                    (2**16 - 1)
+                    * (self.tif_data - self.percs[0])
+                    / (self.percs[1] - self.percs[0])
                 )
             imsave(name + "", self.tif_data.astype(np.uint16))

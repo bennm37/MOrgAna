@@ -25,6 +25,7 @@ model = "MLP"
 
 ###############################################################################
 
+
 def train_model(model_folder):
     print("-------------" + model_folder + "------------")
     training_folder = os.path.join(model_folder, "trainingset")
@@ -54,14 +55,16 @@ def train_model(model_folder):
     scaler, train_batches = train.generate_training_set_unet(
         img_train,
         [g.astype(np.uint8) for g in gt_train],
-        downscaled_size=(512,512),
+        downscaled_size=(512, 512),
         edge_size=edge_size,
         buffer_size=100,
         batch_size=40,
     )
     for images, masks in train_batches.take(2):
         sample_image, sample_mask = images[0], masks[0]
-        sample_image = (scaler.inverse_transform(sample_image.reshape(-1,1)).reshape(*sample_image.shape)).astype(np.uint8)
+        sample_image = (scaler.inverse_transform(sample_image.reshape(-1, 1)).reshape(*sample_image.shape)).astype(
+            np.uint8
+        )
         fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
         ax[0].imshow(sample_image)
         ax[0].axis("off")
@@ -85,6 +88,7 @@ def train_model(model_folder):
         model=model,
     )
     print("##### Model saved!")
+
 
 if __name__ == "__main__":
     model_folder = "/Users/nicholb/Documents/data/organoid_data/fullModel"

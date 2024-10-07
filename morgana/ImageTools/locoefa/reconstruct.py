@@ -16,12 +16,8 @@ def reconstruct_contour(mode, tp, rec_type="EFA", first_mode=0, last_mode=2):
             y += mode.gamma[0]
 
         for p in range(np.max([1, first_mode]), np.min([last_mode, N_modes + 1])):
-            x += mode.alpha[p] * np.cos(2.0 * np.pi * p * tp) + mode.beta[p] * np.sin(
-                2.0 * np.pi * p * tp
-            )
-            y += mode.gamma[p] * np.cos(2.0 * np.pi * p * tp) + mode.delta[p] * np.sin(
-                2.0 * np.pi * p * tp
-            )
+            x += mode.alpha[p] * np.cos(2.0 * np.pi * p * tp) + mode.beta[p] * np.sin(2.0 * np.pi * p * tp)
+            y += mode.gamma[p] * np.cos(2.0 * np.pi * p * tp) + mode.delta[p] * np.sin(2.0 * np.pi * p * tp)
 
     elif rec_type == "LOCOEFA":
         if first_mode == 0:

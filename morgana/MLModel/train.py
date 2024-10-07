@@ -1,7 +1,7 @@
-import tqdm, os
+import tqdm
 import numpy as np
 from skimage import transform, morphology
-from sklearn import preprocessing, linear_model, neural_network
+from sklearn import preprocessing, linear_model
 from morgana.ImageTools import processfeatures
 import tensorflow as tf
 
@@ -12,7 +12,7 @@ class Augment(tf.keras.layers.Layer):
     def __init__(
         self,
         seed=None,
-        aug={"flip": "horizontal", "rotation": 0.1, "zoom": (0,-0.2), "translation": 0.02},
+        aug={"flip": "horizontal", "rotation": 0.1, "zoom": (0, -0.2), "translation": 0.02},
     ):
         super(Augment, self).__init__()
         # Define all augmentation layers
@@ -32,22 +32,14 @@ class Augment(tf.keras.layers.Layer):
         if "flip" in aug:
             layers.append(tf.keras.layers.RandomFlip(mode=aug["flip"], seed=seed))
         if "rotation" in aug:
-            layers.append(
-                tf.keras.layers.RandomRotation(factor=aug["rotation"], seed=seed, fill_mode="reflect")
-            )
+            layers.append(tf.keras.layers.RandomRotation(factor=aug["rotation"], seed=seed, fill_mode="reflect"))
         if "zoom" in aug:
-            layers.append(
-                tf.keras.layers.RandomZoom(
-                    height_factor=aug["zoom"], width_factor=aug["zoom"], seed=seed
-                )
-            )
+            layers.append(tf.keras.layers.RandomZoom(height_factor=aug["zoom"], width_factor=aug["zoom"], seed=seed))
         return layers
 
     def call(self, inputs, labels):
         # Apply all augmentations to both inputs and labels
-        for input_aug, label_aug in zip(
-            self.input_augmentations, self.label_augmentations
-        ):
+        for input_aug, label_aug in zip(self.input_augmentations, self.label_augmentations):
             inputs = input_aug(inputs)
             labels = label_aug(labels)
         return inputs, labels
@@ -108,9 +100,7 @@ def generate_training_set(
         print("Number of features per image: %d" % (len(sigmas) * 4 + 1))
         X_train = np.zeros((n_coords, len(sigmas) * 4 + 1))
     elif feature_mode == "daisy":
-        print(
-            "Number of features per image:%d" % ((5 * 8 + 1) * 8 + len(sigmas) * 4 + 1)
-        )
+        print("Number of features per image:%d" % ((5 * 8 + 1) * 8 + len(sigmas) * 4 + 1))
         X_train = np.zeros((n_coords, (5 * 8 + 1) * 8 + len(sigmas) * 4 + 1))
     Y_train = np.zeros(n_coords)
     weight_train = np.zeros(n_coords)
@@ -121,14 +111,14 @@ def generate_training_set(
         stop = start + n_coords_per_image[i]
         shape = shapes[i]
         x_in, y_in = _input[i], gt[i]
-
         # compute all features
         X = processfeatures.get_features(x_in, sigmas, feature_mode=feature_mode)
-        Y = extract_edges(y_in, edge_size)
+        Y = 1.0 * (y_in > np.min(gt))
+        edge = Y - morphology.binary_dilation(Y, morphology.disk(1))
+        edge = morphology.binary_dilation(edge, morphology.disk(edge_size))
+        Y = 1 * np.logical_or(Y, edge) + edge
         # flatten the images
-        X = np.transpose(
-            np.reshape(X, (X.shape[0], np.prod(shape)))
-        )  # flatten the image feature
+        X = np.transpose(np.reshape(X, (X.shape[0], np.prod(shape))))  # flatten the image feature
         Y = np.reshape(Y, np.prod(shape))  # flatten the ground truth
         edge = np.reshape(edge, np.prod(shape))  # flatten the edge
 
@@ -172,9 +162,7 @@ def generate_training_set_unet(
     scaler = preprocessing.RobustScaler(quantile_range=(1.0, 99.0))
     scaler.fit(np.concatenate([img.flatten() for img in _input]).reshape(-1, 1))
 
-    _input = [
-        scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input
-    ]
+    _input = [scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input]
     labels = [extract_edges(g, edge_size).reshape(*g.shape, 1) for g in gt]
     dataset = [resize_data(x, y, downscaled_size) for x, y in zip(_input, labels)]
     dataset = np.moveaxis(np.array(dataset), 1, 0)
@@ -192,23 +180,18 @@ def generate_training_set_unet(
 
 def train_classifier(X, Y, w, model="logistic", epochs=50, n_classes=3, hidden=(350, 50)):
     # train the classifier
-    if model=="logistic":
+    if model == "logistic":
         print("Training of Logistic Regression classifier...")
         classifier = linear_model.LogisticRegression(solver="lbfgs", multi_class="auto")
         classifier.fit(X, Y, sample_weight=w)
     else:
         print("Training of MLP classifier...")
-        from tensorflow.keras import layers
+        from tensorflow.keras import layers  # type: ignore
         from tensorflow import keras
 
         Y = keras.utils.to_categorical(Y, num_classes=n_classes)
-        model_layers = [
-            layers.Dense(hidden[i], activation="relu", name="layer%d" % i)
-            for i in range(len(hidden))
-        ]
-        model_layers.append(
-            layers.Dense(n_classes, activation="softmax", name="layer%d" % len(hidden))
-        )
+        model_layers = [layers.Dense(hidden[i], activation="relu", name="layer%d" % i) for i in range(len(hidden))]
+        model_layers.append(layers.Dense(n_classes, activation="softmax", name="layer%d" % len(hidden)))
 
         classifier = keras.Sequential(model_layers)
         classifier.compile(
@@ -235,14 +218,10 @@ def train_unet(
     steps_per_epoch=10,
     input_shape=(512, 512, 3),
 ):
-    from tensorflow.keras import layers
-    from tensorflow import keras
     from tensorflow_examples.models.pix2pix import pix2pix
 
     # Use a pretrained encoder mobilenetv2
-    base_model = tf.keras.applications.MobileNetV2(
-        input_shape=input_shape, include_top=False
-    )
+    base_model = tf.keras.applications.MobileNetV2(input_shape=input_shape, include_top=False)
     # Use the activations of these layers
     layer_names = [
         "block_1_expand_relu",  # 64x64
@@ -288,7 +267,5 @@ def train_unet(
         metrics=["accuracy"],
     )
     # model.fit(train_batches, epochs=epochs)
-    model_history = model.fit(
-        train_batches, epochs=epochs, steps_per_epoch=steps_per_epoch
-    )
+    _ = model.fit(train_batches, epochs=epochs, steps_per_epoch=steps_per_epoch)
     return model

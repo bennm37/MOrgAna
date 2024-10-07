@@ -52,9 +52,7 @@ def initialize_model_folder(folder, dN=30, start=0, combine=True):
         flist = flist[start::dN]
     else:
         rng = default_rng()
-        random_choice = rng.choice(
-            len(flist), size=np.clip(len(flist) // 10, 1, None), replace=False
-        )
+        random_choice = rng.choice(len(flist), size=np.clip(len(flist) // 10, 1, None), replace=False)
         flist = [flist[i] for i in random_choice]
 
     # copy images to trainingset folder

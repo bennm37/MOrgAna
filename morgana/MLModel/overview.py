@@ -14,15 +14,16 @@ import multiprocessing
 
 from morgana.DatasetTools import io
 
+
 def load_masks(input_folder, start=None, stop=None, downshape=1):
     flist_in = io.get_image_list(input_folder)
     segment_folder = os.path.join(input_folder, "result_segmentation")
     flist_ws = io.get_image_list(segment_folder, "_watershed.tif", "include")
     flist_cl = io.get_image_list(segment_folder, "_classifier.tif", "include")
 
-    if start == None:
+    if start is None:
         start = 0
-    if stop == None:
+    if stop is None:
         stop = len(flist_in)
     flist_in = flist_in[start:stop]
     flist_ws = flist_ws[start:stop]
@@ -43,40 +44,42 @@ def load_masks(input_folder, start=None, stop=None, downshape=1):
         watersheds[i] = imread(flist_ws[i])[::downshape, ::downshape].astype(float)
     return imgs, classifiers, watersheds
 
+
 def alpha_overlay(img, overlay):
-    alpha_overlay = overlay[:,:,3] / 255.0
+    alpha_overlay = overlay[:, :, 3] / 255.0
     for color in range(0, 3):
-        img[:,:,color] = alpha_overlay * overlay[:,:,color] + \
-            img[:,:,color] * (1 - alpha_overlay)
+        img[:, :, color] = alpha_overlay * overlay[:, :, color] + img[:, :, color] * (1 - alpha_overlay)
     return img
 
-def create_icons(imgs, classifiers, watersheds, cc=[255,0,0], wc=[0,255,255], size=200):
+
+def create_icons(imgs, classifiers, watersheds, cc=[255, 0, 0], wc=[0, 255, 255], size=200):
     cc, wc = np.array(cc), np.array(wc)
     n_img = len(imgs)
     icons = [0.0 for i in range(n_img)]
     for i in range(n_img):
         if np.max(imgs[i]) > 255:
-            img = np.array(img / 256.0) # assumes 16 bit
+            img = np.array(img / 256.0)  # assumes 16 bit
         else:
             img = np.array(imgs[i])
         img = img.astype(np.uint8)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         vmin, vmax = np.percentile(img, 1.0), np.percentile(img, 99.0)
         img = np.clip(img, vmin, vmax)
-        img = 255*(img - vmin) / (vmax - vmin)
+        img = 255 * (img - vmin) / (vmax - vmin)
         img = img.astype(np.uint8)
-        classifier = np.where(classifiers[i]>0,1,0).astype(np.uint8)
+        classifier = np.where(classifiers[i] > 0, 1, 0).astype(np.uint8)
         watershed = watersheds[i]
         img = cv2.resize(img, (size, size))
         classifier = cv2.resize(classifier, (size, size))
         watershed = cv2.resize(watershed, (size, size))
         icon = img.copy()
-        w_boundaries = find_boundaries(watershed>0, mode='inner')
+        w_boundaries = find_boundaries(watershed > 0, mode="inner")
         icon[w_boundaries] = wc[:3]
-        c_boundaries = find_boundaries(classifier>0, mode='inner')
+        c_boundaries = find_boundaries(classifier > 0, mode="inner")
         icon[c_boundaries] = cc[:3]
         icons[i] = icon
     return icons
+
 
 def generate_overview(input_folder, saveFig=True, fileName="", start=None, stop=None, downshape=1):
     print("Generating recap image at", input_folder)
@@ -118,5 +121,5 @@ def generate_overview(input_folder, saveFig=True, fileName="", start=None, stop=
                 cond + "_recap_classifier.png",
             )
         fig.savefig(fileName, dpi=300)
-        print("Done saving!")        
+        print("Done saving!")
     return fig

@@ -58,9 +58,7 @@ if __name__ == "__main__":
         result_folder = os.path.join(image_folder, "result_segmentation")
         folder, cond = os.path.split(image_folder)
 
-        flist_in, chosen_masks, down_shapes, thinnings, smoothings = ioSeg.load_segmentation_params(
-            result_folder
-        )
+        flist_in, chosen_masks, down_shapes, thinnings, smoothings = ioSeg.load_segmentation_params(result_folder)
         flist_in = [os.path.join(image_folder, f) for f in flist_in]
         n_imgs = len(flist_in)
 
@@ -88,9 +86,7 @@ if __name__ == "__main__":
             if not os.path.exists(final_mask_name):
 
                 if chosen_masks[i] == "w":
-                    _rawmask = imread(
-                        os.path.join(result_folder, filename + "_watershed" + extension)
-                    )
+                    _rawmask = imread(os.path.join(result_folder, filename + "_watershed" + extension))
                     mask = segment.smooth_mask(
                         _rawmask,
                         mode="watershed",
@@ -110,9 +106,7 @@ if __name__ == "__main__":
                         )
 
                 elif chosen_masks[i] == "c":
-                    _rawmask = imread(
-                        os.path.join(result_folder, filename + "_classifier" + extension)
-                    )
+                    _rawmask = imread(os.path.join(result_folder, filename + "_classifier" + extension))
                     mask = segment.smooth_mask(
                         _rawmask,
                         mode="classifier",
@@ -140,9 +134,7 @@ if __name__ == "__main__":
                         )
 
                 elif chosen_masks[i] == "m":
-                    if not os.path.exists(
-                        os.path.join(result_folder, filename + "_manual" + extension)
-                    ):
+                    if not os.path.exists(os.path.join(result_folder, filename + "_manual" + extension)):
                         if not PyQt5.QtWidgets.QApplication.instance():
                             app = PyQt5.QtWidgets.QApplication(sys.argv)
                         else:
@@ -190,9 +182,7 @@ if __name__ == "__main__":
                         thinnings,
                         smoothings,
                     )
-                    if not os.path.exists(
-                        os.path.join(result_folder, filename + "_manual" + extension)
-                    ):
+                    if not os.path.exists(os.path.join(result_folder, filename + "_manual" + extension)):
                         m = manualmask.makeManualMask(flist_in[i])
                         m.show()
                         m.exec()
