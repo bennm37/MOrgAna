@@ -11,7 +11,7 @@ def save_model(
     fraction=0.1,
     bias=-1,
     feature_mode="ilastik",
-    deep=False,
+    model="logistic",
 ):
     """
     save a previously generated machine learning model in the "model_folder" input path:
@@ -27,7 +27,7 @@ def save_model(
     except NameError:
         to_unicode = str
 
-    if not deep:
+    if model=="logistic":
         joblib.dump(classifier, os.path.join(model_folder, "classifier.pkl"))
     else:
         classifier.save(os.path.join(model_folder, "classifier.keras"))
@@ -53,7 +53,7 @@ def save_model(
         f.write(to_unicode(str_))
 
 
-def load_model(model_folder, deep=False):
+def load_model(model_folder, model="logistic"):
     """
     load a previously saved machine learning model from the "model_folder" input path:
     * model_folder\classifier.pkl: logistic classifier model
@@ -61,7 +61,7 @@ def load_model(model_folder, deep=False):
     * model_folder\params.json: parameters used for training
 
     """
-    if not deep:
+    if model=="logistic":
         try:
             classifier = joblib.load(os.path.join(model_folder, "classifier.pkl"))
         except:

@@ -31,7 +31,7 @@ edge_size = 5
 pxl_extract_fraction = 0.25
 pxl_extract_bias = 0.4
 feature_type = "daisy"  # 'daisy' or 'ilastik'
-deep = False  # True: deep learning with Multi Layer Perceptrons; False: Logistic regression
+model = "logistic"
 
 ###############################################################################
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
         print("##### Training model...")
         start = time.time()
-        classifier = train.train_classifier(X, Y, w, deep=deep)
+        classifier = train.train_classifier(X, Y, w, model=model)
         print("Models trained in %.3f seconds." % (time.time() - start))
         # print('classes_: ', classifier.classes_)
         # print('coef_: ', classifier.coef_)
@@ -106,6 +106,6 @@ if __name__ == "__main__":
             fraction=pxl_extract_fraction,
             feature_mode=feature_type,
             bias=pxl_extract_bias,
-            deep=deep,
+            model=model,
         )
         print("##### Model saved!")

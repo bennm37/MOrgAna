@@ -53,13 +53,13 @@ def create_features(
     return _input, shape
 
 
-def predict(_input, classifier, shape=None, check_time=False, gt=np.array([]), deep=False):
+def predict(_input, classifier, shape=None, check_time=False, gt=np.array([]), model="logistic"):
     if shape is None:
         shape = _input.shape
 
     # use classifier to predict image
     start = time.time()
-    if deep:
+    if model:
         y_prob = classifier.predict(_input)  # predict probabilities of every pixel for every class
     else:
         y_prob = classifier.predict_proba(_input)
@@ -105,11 +105,10 @@ def predict_image(
     new_shape_scale=-1,
     feature_mode="ilastik",
     check_time=False,
-    deep=False,
-):
+    model="logistic",
+):  
     original_shape = _input.shape
     n_classes = 3  # len(classifier.classes_)
-
     _input, shape = create_features(
         _input,
         scaler,
@@ -119,11 +118,9 @@ def predict_image(
         feature_mode=feature_mode,
         check_time=check_time,
     )
-
     y_pred, y_prob = predict(
-        _input, classifier, gt=gt, check_time=check_time, shape=shape, deep=deep
+        _input, classifier, gt=gt, check_time=check_time, shape=shape, model=model
     )
-
     y_pred, y_prob = reshape(
         y_pred,
         y_prob,
@@ -197,8 +194,7 @@ def make_watershed(mask, edge, new_shape_scale=-1):
     return labels
 
 
-def predict_image_from_file(f_in, classifier, scaler, params, deep=False):
-
+def predict_image_from_file(f_in, classifier, scaler, params, model="logistic"):
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
     new_name_classifier = os.path.join(
@@ -207,18 +203,13 @@ def predict_image_from_file(f_in, classifier, scaler, params, deep=False):
     new_name_watershed = os.path.join(
         parent, "result_segmentation", filename + "_watershed" + file_extension
     )
-
-    #    print('#'*20+'\nLoading',f_in,'...')
     img = imread(f_in)
     if len(img.shape) == 2:
         img = np.expand_dims(img, 0)
     if img.shape[-1] == np.min(img.shape):
         img = np.moveaxis(img, -1, 0)
     img = img[0]
-
     if not os.path.exists(new_name_classifier):
-        # print('Predicting image...')
-
         pred, prob = predict_image(
             img,
             classifier,
@@ -226,7 +217,7 @@ def predict_image_from_file(f_in, classifier, scaler, params, deep=False):
             sigmas=params["sigmas"],
             new_shape_scale=params["down_shape"],
             feature_mode=params["feature_mode"],
-            deep=deep,
+            model=model,
         )
 
         # remove objects at the border

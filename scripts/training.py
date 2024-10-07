@@ -21,7 +21,7 @@ edge_size = 5
 pxl_extract_fraction = 0.25
 pxl_extract_bias = 0.4
 feature_type = "daisy"  # 'daisy' or 'ilastik'
-deep = True  # True: deep learning with Multi Layer Perceptrons; False: Logistic regression
+model = "MLP"
 
 ###############################################################################
 
@@ -82,7 +82,7 @@ def train_model(model_folder):
         fraction=pxl_extract_fraction,
         feature_mode=feature_type,
         bias=pxl_extract_bias,
-        deep=deep,
+        model=model,
     )
     print("##### Model saved!")
 

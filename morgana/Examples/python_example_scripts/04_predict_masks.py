@@ -32,7 +32,7 @@ exclude_folder = []
 image_folders = [g for g in folder_names if not g in model_folders_name + exclude_folder]
 image_folders = [os.path.join(parent_folder, i) for i in image_folders]
 
-deep = False  # True: deep learning with Multi Layer Perceptrons; False: Logistic regression
+model = "logistic" 
 
 ###############################################################################
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
         print("-------------" + image_folder + "------------")
         print("##### Loading classifier model and parameters...")
-        classifier, scaler, params = ioML.load_model(model_folder, deep=deep)
+        classifier, scaler, params = ioML.load_model(model_folder, model=model)
         print("##### Model loaded!")
 
         #######################################################################
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         N_cores = np.clip(int(0.8 * multiprocessing.cpu_count()), 1, None)
 
         # try using multiprocessing (only for LR classifier)
-        if not deep:
+        if model == "logistic":
             pool = multiprocessing.Pool(N_cores)
             _ = list(
                 tqdm.tqdm(
@@ -77,7 +77,7 @@ if __name__ == "__main__":
                             repeat(classifier),
                             repeat(scaler),
                             repeat(params),
-                            repeat(deep),
+                            repeat(model),
                         ),
                     ),
                     total=N_img,
@@ -85,6 +85,6 @@ if __name__ == "__main__":
             )
         else:
             for i in tqdm.tqdm(range(N_img)):
-                predict.predict_image_from_file(flist_in[i], classifier, scaler, params, deep=deep)
+                predict.predict_image_from_file(flist_in[i], classifier, scaler, params, model=model)
 
     print("All images done!")

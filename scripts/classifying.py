@@ -14,7 +14,7 @@ def natural_key(text):
     return [int(c) if c.isdigit() else c for c in re.split(r'(\d+)', text)]
 
 
-def predict_single_image(f_in, classifier, scaler, params, deep=True):
+def predict_single_image(f_in, classifier, scaler, params, model="MLP"):
 
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
@@ -40,7 +40,7 @@ def predict_single_image(f_in, classifier, scaler, params, deep=True):
             sigmas=params["sigmas"],
             new_shape_scale=params["down_shape"],
             feature_mode=params["feature_mode"],
-            deep=deep,
+            model=model,
         )
         negative = ndi.binary_fill_holes(pred == 0)
         mask_pred = (pred == 1) * negative
@@ -57,13 +57,13 @@ def predict_single_image(f_in, classifier, scaler, params, deep=True):
     return None
 
 
-def predict_batch(image_folders, model_folder, deep=False):
+def predict_batch(image_folders, model_folder, model="logistic"):
     for image_folder in image_folders:
         image_folder = os.path.abspath(image_folder)
         print("-------------" + image_folder + "------------")
         training_folder = os.path.join(model_folder, "trainingset")
         print("##### Loading classifier model and parameters...")
-        classifier, scaler, params = ioML.load_model(model_folder, deep=deep)
+        classifier, scaler, params = ioML.load_model(model_folder, model=model)
         print("##### Model loaded!")
         result_folder = os.path.join(image_folder, "result_segmentation")
         if not os.path.exists(result_folder):
@@ -82,7 +82,7 @@ def predict_batch(image_folders, model_folder, deep=False):
                         repeat(classifier),
                         repeat(scaler),
                         repeat(params),
-                        repeat(deep),
+                        repeat(model),
                     ),
                 ),
                 total=N_img,
@@ -92,7 +92,7 @@ def predict_batch(image_folders, model_folder, deep=False):
 
 
 def predict_folders(image_folder_nested, model_folder):
-    classifier, scaler, params = ioML.load_model(model_folder, deep=True)
+    classifier, scaler, params = ioML.load_model(model_folder, model="MLP")
     for folder in os.listdir(image_folder_nested):
         folder_path = os.path.join(image_folder_nested, folder)
         if os.path.isdir(folder_path):

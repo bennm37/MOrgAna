@@ -87,7 +87,7 @@ print(X.shape, Y.shape)
 
 print("##### Training model...")
 start = time.time()
-classifier = MLModel.train.train_classifier(X, Y, w, deep=True, epochs=10)
+classifier = MLModel.train.train_classifier(X, Y, w, model="MLP", epochs=10)
 print("Models trained in %.3f seconds." % (time.time() - start))
 # print('classes_: ', classifier.classes_)
 # print('coef_: ', classifier.coef_)
@@ -106,7 +106,7 @@ MLModel.io.save_model(
     fraction=params["fraction"],
     feature_mode=params["feature_mode"],
     bias=params["bias"],
-    deep=True,
+    model="MLP",
 )
 print("##### Model saved!")
 
@@ -115,7 +115,7 @@ print("##### Model saved!")
 #############################################
 
 print("##### Loading classifier model and parameters...")
-classifier, scaler, params = MLModel.io.load_model(modelFolder, deep=True)
+classifier, scaler, params = MLModel.io.load_model(modelFolder, model="MLP")
 print(params)
 print("##### Model loaded!")
 
@@ -147,7 +147,7 @@ for f_in in flist_in:
         sigmas=params["sigmas"],
         new_shape_scale=params["down_shape"],
         feature_mode=params["feature_mode"],
-        deep=True,
+        model="MLP",
         check_time=True,
     )
     print("Predicted in:", time.time() - start)

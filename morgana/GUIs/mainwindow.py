@@ -148,8 +148,10 @@ class morganaApp(QWidget):
         self.modelFolderSpace.setText(self.modelFolder)
         self.modelFolderSpace.setReadOnly(True)
         self.modelFolderSpace.setStyleSheet("color:gray;")
-        self.deepModel = QCheckBox("Use Multi Layer Perceptrons")
-        self.deepModel.setChecked(False)
+        self.modelType = QComboBox()
+        self.modelTypeLabel = QLabel("Model type:")
+        self.modelType.addItems(["logistic", "MLP", "unet"])
+        self.modelType.setCurrentIndex(0)
 
         self.showMoreButton = QPushButton("Show/Hide params")
         self.showMoreButton.setFocusPolicy(Qt.NoFocus)
@@ -229,7 +231,8 @@ class morganaApp(QWidget):
         layout.addWidget(selectModel, 1, 0, 1, 2)
         layout.addWidget(QLabel("Model folder:"), 2, 0, 1, 1)
         layout.addWidget(self.modelFolderSpace, 2, 1, 1, 1)
-        layout.addWidget(self.deepModel, 3, 0, 1, 1)
+        layout.addWidget(self.modelTypeLabel, 3, 0, 1, 1)
+        layout.addWidget(self.modelType, 3, 1, 1, 1)
 
         layout.addWidget(self.showMoreButton, 4, 0, 1, 1)
         layout.addWidget(self.trainButton, 4, 1, 1, 1)
@@ -278,7 +281,7 @@ class morganaApp(QWidget):
         self.biasSpace.hide()
         self.featuresLabel.hide()
         self.feature_modeSpace.hide()
-        self.showMoreModel = False
+        self.showMoremodel = "logistic"
 
         self.modelGroup.setLayout(layout)
 
@@ -296,7 +299,7 @@ class morganaApp(QWidget):
             self.biasSpace.hide()
             self.featuresLabel.hide()
             self.feature_modeSpace.hide()
-            self.showMoreModel = False
+            self.showMoremodel = "logistic"
         else:
             self.sigmasLabel.show()
             self.sigmasSpace.show()
@@ -310,7 +313,7 @@ class morganaApp(QWidget):
             self.biasSpace.show()
             self.featuresLabel.show()
             self.feature_modeSpace.show()
-            self.showMoreModel = True
+            self.showMoremodel = "MLP"
 
     def selectModelFolder(self):
         self.modelFolder = QFileDialog.getExistingDirectory(self, "Select Input Folder of Model")
@@ -480,8 +483,9 @@ class morganaApp(QWidget):
         print("##### Training model...")
         start = time.time()
         self.classifier = train.train_classifier(
-            X, Y, w, deep=self.deepModel.isChecked(), hidden=(350, 50)
+            X, Y, w, model=self.modelType.currentText(), hidden=(350, 50)
         )
+
         print("Models trained in %.3f seconds." % (time.time() - start))
         # print('classes_: ', self.classifier.classes_)
         # print('coef_: ', self.classifier.coef_)
@@ -500,7 +504,7 @@ class morganaApp(QWidget):
             fraction=self.params["fraction"],
             feature_mode=self.params["feature_mode"],
             bias=self.params["bias"],
-            deep=self.deepModel.isChecked(),
+            model=self.modelType.currentText(),
         )
         print("##### Model saved!")
         self.predictButton.setEnabled(True)
@@ -511,7 +515,7 @@ class morganaApp(QWidget):
         #############################################
         print("##### Loading classifier model and parameters...")
         self.classifier, self.scaler, self.params = ioML.load_model(
-            self.modelFolder, deep=self.deepModel.isChecked()
+            self.modelFolder, model=self.modelType.currentText()
         )
         if self.classifier is None:
             QMessageBox.warning(self, "Warning!", "Could not find any model")
@@ -564,7 +568,7 @@ class morganaApp(QWidget):
                 sigmas=self.params["sigmas"],
                 new_shape_scale=self.params["down_shape"],
                 feature_mode=self.params["feature_mode"],
-                deep=self.deepModel.isChecked(),
+                model=self.modelType.currentText(),
             )
 
             # remove objects at the border
