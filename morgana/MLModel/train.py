@@ -7,30 +7,47 @@ import tensorflow as tf
 
 tf.experimental.numpy.experimental_enable_numpy_behavior()
 
+
 class Augment(tf.keras.layers.Layer):
-    def __init__(self, seed=None):
+    def __init__(
+        self,
+        seed=None,
+        aug={"flip": "horizontal", "rotation": 0.1, "zoom": (0,-0.2), "translation": 0.02},
+    ):
         super(Augment, self).__init__()
         # Define all augmentation layers
-        self.input_augmentations = [
-            tf.keras.layers.RandomFlip(mode="horizontal", seed=seed),
-            tf.keras.layers.RandomRotation(factor=0.1, seed=seed),
-            tf.keras.layers.RandomZoom(height_factor=0.1, width_factor=0.1, seed=seed),
-            tf.keras.layers.RandomTranslation(
-                height_factor=0.1, width_factor=0.1, seed=seed
-            ),
-        ]
-        self.label_augmentations = [
-            tf.keras.layers.RandomFlip(mode="horizontal", seed=seed),
-            tf.keras.layers.RandomRotation(factor=0.1, seed=seed),
-            tf.keras.layers.RandomZoom(height_factor=0.1, width_factor=0.1, seed=seed),
-            tf.keras.layers.RandomTranslation(
-                height_factor=0.1, width_factor=0.1, seed=seed
-            ),
-        ]
+        self.input_augmentations = self.get_augemntations(seed, aug)
+        self.label_augmentations = self.get_augemntations(seed, aug)
+
+    def get_augemntations(self, seed, aug):
+        layers = []
+        if "translation" in aug:
+            layers.append(
+                tf.keras.layers.RandomTranslation(
+                    height_factor=aug["translation"],
+                    width_factor=aug["translation"],
+                    seed=seed,
+                )
+            )
+        if "flip" in aug:
+            layers.append(tf.keras.layers.RandomFlip(mode=aug["flip"], seed=seed))
+        if "rotation" in aug:
+            layers.append(
+                tf.keras.layers.RandomRotation(factor=aug["rotation"], seed=seed, fill_mode="reflect")
+            )
+        if "zoom" in aug:
+            layers.append(
+                tf.keras.layers.RandomZoom(
+                    height_factor=aug["zoom"], width_factor=aug["zoom"], seed=seed
+                )
+            )
+        return layers
 
     def call(self, inputs, labels):
         # Apply all augmentations to both inputs and labels
-        for input_aug, label_aug in zip(self.input_augmentations, self.label_augmentations):
+        for input_aug, label_aug in zip(
+            self.input_augmentations, self.label_augmentations
+        ):
             inputs = input_aug(inputs)
             labels = label_aug(labels)
         return inputs, labels
@@ -153,11 +170,15 @@ def generate_training_set_unet(
     batch_size=32,
 ):
     scaler = preprocessing.RobustScaler(quantile_range=(1.0, 99.0))
-    scaler.fit(np.array(_input).reshape(-1, 1))
-    _input = [scaler.transform(img.reshape(-1,1)).reshape(*img.shape,1) for img in _input]
-    labels = [extract_edges(g, edge_size).reshape(*g.shape,1) for g in gt]
-    dataset = tf.data.Dataset.from_tensor_slices((_input, labels))
-    dataset = dataset.map(lambda x, y: resize_data(x, y, downscaled_size))
+    scaler.fit(np.concatenate([img.flatten() for img in _input]).reshape(-1, 1))
+
+    _input = [
+        scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input
+    ]
+    labels = [extract_edges(g, edge_size).reshape(*g.shape, 1) for g in gt]
+    dataset = [resize_data(x, y, downscaled_size) for x, y in zip(_input, labels)]
+    dataset = np.moveaxis(np.array(dataset), 1, 0)
+    dataset = tf.data.Dataset.from_tensor_slices(tuple(dataset))
     dataset = dataset.map(lambda x, y: (tf.image.grayscale_to_rgb(x), y))
     train_batches = (
         dataset.shuffle(buffer_size)
@@ -207,7 +228,13 @@ def train_classifier(X, Y, w, deep=False, epochs=50, n_classes=3, hidden=(350, 5
     return classifier
 
 
-def train_unet(train_batches, epochs=50, n_output_classes=3, steps_per_epoch=10, input_shape=(512, 512, 3)):
+def train_unet(
+    train_batches,
+    epochs=50,
+    n_output_classes=3,
+    steps_per_epoch=10,
+    input_shape=(512, 512, 3),
+):
     from tensorflow.keras import layers
     from tensorflow import keras
     from tensorflow_examples.models.pix2pix import pix2pix
@@ -261,5 +288,7 @@ def train_unet(train_batches, epochs=50, n_output_classes=3, steps_per_epoch=10,
         metrics=["accuracy"],
     )
     # model.fit(train_batches, epochs=epochs)
-    model_history = model.fit(train_batches, epochs=epochs, steps_per_epoch=steps_per_epoch)
+    model_history = model.fit(
+        train_batches, epochs=epochs, steps_per_epoch=steps_per_epoch
+    )
     return model

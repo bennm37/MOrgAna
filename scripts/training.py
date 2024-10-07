@@ -61,8 +61,8 @@ def train_model(model_folder):
     )
     for images, masks in train_batches.take(2):
         sample_image, sample_mask = images[0], masks[0]
-        sample_image = (scaler.inverse_transform(sample_image.reshape(-1,1)).reshape(*sample_image.shape)/256).astype(np.uint8)
-        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        sample_image = (scaler.inverse_transform(sample_image.reshape(-1,1)).reshape(*sample_image.shape)).astype(np.uint8)
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
         ax[0].imshow(sample_image)
         ax[0].axis("off")
         ax[1].imshow(sample_mask)
@@ -87,5 +87,5 @@ def train_model(model_folder):
     print("##### Model saved!")
 
 if __name__ == "__main__":
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_copy"
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/fullModel"
     train_model(model_folder)
