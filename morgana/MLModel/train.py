@@ -49,10 +49,7 @@ def downsize_image(image, down_shape):
     if down_shape != -1:
         return transform.resize(
             image,
-            (
-                tf.constant(image.shape[0] * down_shape, dtype=tf.int32),
-                tf.constant(image.shape[1] * down_shape, dtype=tf.int32),
-            ),
+            (int(down_shape * image.shape[0]), int(down_shape * image.shape[1])),
             preserve_range=True,
         )
     else:
@@ -60,7 +57,7 @@ def downsize_image(image, down_shape):
 
 
 def resize_data(image, label, size):
-    return tf.image.resize(image, size), tf.image.resize(label, size)
+    return transform.resize(image, size), transform.resize(label, size)
 
 
 def extract_edges(gt, edge_size):
@@ -178,7 +175,7 @@ def generate_training_set_unet(
     return scaler, train_batches
 
 
-def train_classifier(X, Y, w, model="logistic", epochs=50, n_classes=3, hidden=(350, 50)):
+def train_classifier(X, Y, w, model="logistic", epochs=50, steps_per_epoch=10, n_classes=3, hidden=(350, 50)):
     # train the classifier
     if model == "logistic":
         print("Training of Logistic Regression classifier...")
@@ -203,6 +200,7 @@ def train_classifier(X, Y, w, model="logistic", epochs=50, n_classes=3, hidden=(
             X,
             Y,
             epochs=epochs,
+            steps_per_epoch=steps_per_epoch,
             batch_size=1024,
             verbose=1,
             validation_split=0.1,
@@ -253,9 +251,7 @@ def train_unet(
             concat = tf.keras.layers.Concatenate()
             x = concat([x, skip])
         # This is the last layer of the model
-        last = tf.keras.layers.Conv2DTranspose(
-            filters=output_channels, kernel_size=3, strides=2, padding="same"
-        )
+        last = tf.keras.layers.Conv2DTranspose(filters=output_channels, kernel_size=3, strides=2, padding="same")
         x = last(x)
 
         return tf.keras.Model(inputs=inputs, outputs=x)

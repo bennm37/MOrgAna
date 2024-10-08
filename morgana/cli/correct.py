@@ -5,12 +5,12 @@ Created on Fri Apr 24 16:46:26 2020
 @author: gritti
 """
 
-import os, glob, sys
+import os
+import sys
 import PyQt5.QtWidgets
 from morgana.GUIs import inspection
 from morgana.DatasetTools.segmentation import io as ioSeg
 from morgana.DatasetTools import io as ioDT
-import cProfile
 
 
 def correct(image_folder):
@@ -43,7 +43,7 @@ def correct(image_folder):
     w = inspection.inspectionWindow_20max(image_folder, parent=None, start=0, stop=20)
     w.show()
     app.exec()
-    app.quit(q)
+    app.quit("q")
 
 
 def correct_folder(image_folder_nested):

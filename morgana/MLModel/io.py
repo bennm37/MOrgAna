@@ -3,17 +3,43 @@ import os
 import json
 
 
+def new_model(model_folder, model="logistic"):
+    try:
+        to_unicode = unicode  # type: ignore
+    except NameError:
+        to_unicode = str
+    model_folder = os.path.abspath(model_folder)
+    if not os.path.exists(model_folder):
+        os.mkdir(model_folder)
+    else:
+        raise ValueError("Model folder already exists.")
+    os.mkdir(os.path.join(model_folder, "trainingset"))
+    if model not in ["logistic", "MLP", "unet"]:
+        raise ValueError("Model not recognized.")
+    # current file path
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    default_path = os.path.join(current_path, f"default_params/{model}.json")
+    default_params = json.load(open(default_path))
+    with open(os.path.join(model_folder, "params.json"), "w") as f:
+        str_ = json.dumps(
+            default_params,
+            indent=4,
+            sort_keys=True,
+            separators=(",", ": "),
+            ensure_ascii=False,
+        )
+        f.write(to_unicode(str_))
+    print(f"Created new {model} model at {model_folder}")
+    print("Populate the trainingset folder with images and edit the params.json file.")
+    return model_folder
+
+
 def save_model(
     model_folder,
     classifier,
     scaler,
-    sigmas=[0.1, 0.5, 1, 2.5, 5, 7.5, 10],
-    down_shape=-1,
-    edge_size=5,
-    fraction=0.1,
-    bias=-1,
-    feature_mode="ilastik",
     model="logistic",
+    **params,
 ):
     """
     save a previously generated machine learning model in the "model_folder" input path:
@@ -36,14 +62,7 @@ def save_model(
 
     joblib.dump(scaler, os.path.join(model_folder, "scaler.pkl"))
 
-    params = {
-        "sigmas": sigmas,
-        "down_shape": down_shape,
-        "edge_size": edge_size,
-        "fraction": fraction,
-        "bias": bias,
-        "feature_mode": feature_mode,
-    }
+    params["model"] = model
     with open(os.path.join(model_folder, "params.json"), "w", encoding="utf8") as f:
         str_ = json.dumps(
             params,

@@ -2,6 +2,7 @@ import time
 import numpy as np
 from skimage import transform, morphology, measure, segmentation
 from sklearn.metrics import classification_report
+
 # import scipy.ndimage as ndi
 from skimage.morphology import remove_small_holes, remove_small_objects
 from skimage.segmentation import clear_border

@@ -1,4 +1,5 @@
-import tqdm, os, glob, sys
+import os
+import sys
 from morgana.GUIs.manualmask import makeManualMask
 from morgana.DatasetTools import io
 
@@ -52,8 +53,7 @@ def create_GT_mask(model_folder):
                 app.exec_()
 
 
-if __name__ == "__main__":
-    # folder containing trainingSet
+def main():
     model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean"
     # model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
     app = PyQt5.QtWidgets.QApplication(sys.argv)

@@ -24,12 +24,6 @@ def collect_morpho_data(groups, morpho_params, computeMorpho, maskType, isTimela
         save_morphological_info = ioStraightMorph.save_straight_morpho_params
         load_morphological_info = ioStraightMorph.load_straight_morpho_params
         file_extension = "_morpho_straight_params.json"
-
-    try:
-        to_unicode = unicode
-    except NameError:
-        to_unicode = str
-
     morpho_params = [m for m, c in zip(morpho_params, computeMorpho) if c]
 
     # collect the data for every group

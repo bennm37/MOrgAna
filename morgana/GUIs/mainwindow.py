@@ -313,21 +313,15 @@ class morganaApp(QWidget):
             self.showMoremodel = "MLP"
 
     def selectModelFolder(self):
-        self.modelFolder = QFileDialog.getExistingDirectory(
-            self, "Select Input Folder of Model"
-        )
+        self.modelFolder = QFileDialog.getExistingDirectory(self, "Select Input Folder of Model")
 
         # check if a trainingset is present
         # a trainingset needs to exist for every model, even if the model is already trained.
         trainingset_folder = os.path.join(self.modelFolder, "trainingset")
         if os.path.exists(trainingset_folder):
-            flist_in = ioDT.get_image_list(
-                trainingset_folder, string_filter="_GT", mode_filter="exclude"
-            )
+            flist_in = ioDT.get_image_list(trainingset_folder, string_filter="_GT", mode_filter="exclude")
             flist_in.sort()
-            flist_gt = ioDT.get_image_list(
-                trainingset_folder, string_filter="_GT", mode_filter="include"
-            )
+            flist_gt = ioDT.get_image_list(trainingset_folder, string_filter="_GT", mode_filter="include")
             flist_gt.sort()
 
             if len(flist_in) == 0:
@@ -352,9 +346,7 @@ class morganaApp(QWidget):
                     fn, ext = os.path.splitext(f)
                     mask_name = fn + "_GT" + ext
                     if not os.path.exists(mask_name):
-                        m = manualmask.makeManualMask(
-                            f, subfolder="", fn=fn + "_GT" + ext
-                        )
+                        m = manualmask.makeManualMask(f, subfolder="", fn=fn + "_GT" + ext)
                         # m.setModal(True)
                         m.show()
                         m.exec()
@@ -364,9 +356,7 @@ class morganaApp(QWidget):
             QMessageBox.warning(
                 self,
                 "Warning, no trainingset!",
-                'Selected "'
-                + self.modelFolder
-                + '" but no "trainingset" folder detected.',
+                'Selected "' + self.modelFolder + '" but no "trainingset" folder detected.',
             )
             self.modelFolder = "-"
             return
@@ -403,15 +393,11 @@ class morganaApp(QWidget):
         self.edge_sizeSpace.setValue(self.params["edge_size"])
         self.fractionSpace.setValue(self.params["fraction"])
         self.biasSpace.setValue(self.params["bias"])
-        self.feature_modeSpace.setCurrentIndex(
-            ["-", "daisy", "ilastik"].index(self.params["feature_mode"])
-        )
+        self.feature_modeSpace.setCurrentIndex(["-", "daisy", "ilastik"].index(self.params["feature_mode"]))
         self.feature_modeSpace.model().item(0).setEnabled(False)
 
     def read_and_check_params(self):
-        s_str = (
-            self.sigmasSpace.text().replace(" ", "").replace("[", "").replace("]", "")
-        )
+        s_str = self.sigmasSpace.text().replace(" ", "").replace("[", "").replace("]", "")
         if s_str[-1] == ",":
             s_str = s_str[:-1]
         self.params["sigmas"] = []
@@ -429,8 +415,7 @@ class morganaApp(QWidget):
             QMessageBox.warning(
                 self,
                 "Warning, values of sigmas not valid!",
-                "It seems there is at least one sigma that is not a number:\n"
-                + str(self.params["sigmas"]),
+                "It seems there is at least one sigma that is not a number:\n" + str(self.params["sigmas"]),
             )
 
     def trainModel(self, archBox):
@@ -440,9 +425,7 @@ class morganaApp(QWidget):
         # load images to be used as training set
         #############################################
         training_folder = os.path.join(self.modelFolder, "trainingset")
-        flist_in = ioDT.get_image_list(
-            training_folder, string_filter="_GT", mode_filter="exclude"
-        )
+        flist_in = ioDT.get_image_list(training_folder, string_filter="_GT", mode_filter="exclude")
         img_train = []
         for f in flist_in:
             img = imread(f)
@@ -453,9 +436,7 @@ class morganaApp(QWidget):
             img_train.append(img[0])
         # img_train = np.array(img_train)
 
-        flist_gt = ioDT.get_image_list(
-            training_folder, string_filter="_GT", mode_filter="include"
-        )
+        flist_gt = ioDT.get_image_list(training_folder, string_filter="_GT", mode_filter="include")
         gt_train = [imread(f) for f in flist_gt]
         gt_train = [g.astype(int) for g in gt_train]
 
@@ -474,27 +455,33 @@ class morganaApp(QWidget):
         #############################################
 
         print("##### Generating training set...")
-        X, Y, w, self.scaler = train.generate_training_set(
-            img_train,
-            [g.astype(np.uint8) for g in gt_train],
-            sigmas=self.params["sigmas"],
-            down_shape=self.params["down_shape"],
-            edge_size=self.params["edge_size"],
-            fraction=self.params["fraction"],
-            feature_mode=self.params["feature_mode"],
-            bias=self.params["bias"],
-        )
-
-        #############################################
-        # Train the model
-        #############################################
-
-        print("##### Training model...")
-        start = time.time()
-        self.classifier = train.train_classifier(
-            X, Y, w, model=self.modelType.currentText(), hidden=(350, 50)
-        )
-
+        model = (self.modelType.currentText(),)
+        if model == "unet":
+            scaler, train_batches = train.generate_training_set_unet(
+                img_train,
+                [g.astype(np.uint8) for g in gt_train],
+                downscaled_size=(512, 512),
+                edge_size=self.params["edge_size"],
+                buffer_size=100,
+                batch_size=40,
+            )
+            start = time.time()
+            print("##### Training model...")
+            self.classifier = train.train_unet(train_batches, model="unet", epochs=10)
+        else:
+            X, Y, w, self.scaler = train.generate_training_set(
+                img_train,
+                [g.astype(np.uint8) for g in gt_train],
+                sigmas=self.params["sigmas"],
+                down_shape=self.params["down_shape"],
+                edge_size=self.params["edge_size"],
+                fraction=self.params["fraction"],
+                feature_mode=self.params["feature_mode"],
+                bias=self.params["bias"],
+            )
+            print("##### Training model...")
+            start = time.time()
+            self.classifier = train.train_classifier(X, Y, w, model=model, hidden=(350, 50))
         print("Models trained in %.3f seconds." % (time.time() - start))
         # print('classes_: ', self.classifier.classes_)
         # print('coef_: ', self.classifier.coef_)
@@ -570,15 +557,22 @@ class morganaApp(QWidget):
             img = img[0]
 
             print("Predicting image...")
-            pred, prob = predict.predict_image(
-                img,
-                self.classifier,
-                self.scaler,
-                sigmas=self.params["sigmas"],
-                new_shape_scale=self.params["down_shape"],
-                feature_mode=self.params["feature_mode"],
-                model=self.modelType.currentText(),
-            )
+            if self.modelType.currentText() == "unet":
+                pred, prob = predict.predict_image_unet(
+                    img,
+                    self.classifier,
+                    self.scaler,
+                )
+            else:
+                pred, prob = predict.predict_image(
+                    img,
+                    self.classifier,
+                    self.scaler,
+                    sigmas=self.params["sigmas"],
+                    new_shape_scale=self.params["down_shape"],
+                    feature_mode=self.params["feature_mode"],
+                    model=self.modelType.currentText(),
+                )
 
             # remove objects at the border
             negative = ndi.binary_fill_holes(pred == 0)
@@ -597,9 +591,7 @@ class morganaApp(QWidget):
             imsave(new_name, pred, check_contrast=False)
 
             # perform watershed
-            mask_final = predict.make_watershed(
-                mask_pred, edge_prob, new_shape_scale=self.params["down_shape"]
-            )
+            mask_final = predict.make_watershed(mask_pred, edge_prob, new_shape_scale=self.params["down_shape"])
 
             # save final mask
             parent, filename = os.path.split(f_in)
@@ -616,14 +608,10 @@ class morganaApp(QWidget):
     def makeRecap(self):
         name, _ = QFileDialog.getSaveFileName(self, "Save Overview File")
         if name != "":
-            overviewML.generate_overview(
-                self.imageFolder, saveFig=True, fileName=name, downshape=5
-            )
+            overviewML.generate_overview(self.imageFolder, saveFig=True, fileName=name, downshape=5)
 
     def openInspectionWindow(self):
-        self.inspector = inspection.inspectionWindow_20max(
-            self.imageFolder, parent=None, start=0, stop=20
-        )
+        self.inspector = inspection.inspectionWindow_20max(self.imageFolder, parent=None, start=0, stop=20)
         self.inspector.show()
 
     def selectMaskFolder(self):
@@ -765,9 +753,7 @@ class morganaApp(QWidget):
     def createGroup1(self):
         self.group1 = QGroupBox("Groups")
         self.group1.setCheckable(True)
-        self.group1.toggled.connect(
-            lambda state, x=self.group1: self.group_checked(state, x)
-        )
+        self.group1.toggled.connect(lambda state, x=self.group1: self.group_checked(state, x))
 
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
@@ -1059,13 +1045,7 @@ class morganaApp(QWidget):
         text = "Composite files saved at:"
         for f in folders:
             parent, cond = os.path.split(f)
-            text = (
-                text
-                + "\n\t"
-                + os.path.join(
-                    os.path.split(parent)[-1], "result_segmentation", cond + file
-                )
-            )
+            text = text + "\n\t" + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
         QMessageBox.information(self, "Completed successfully", text)
 
     def createMeshgridOverviewAll(self):
@@ -1087,13 +1067,7 @@ class morganaApp(QWidget):
         text = "Meshgrid files saved at:"
         for f in folders:
             parent, cond = os.path.split(f)
-            text = (
-                text
-                + "\n\t"
-                + os.path.join(
-                    os.path.split(parent)[-1], "result_segmentation", cond + file
-                )
-            )
+            text = text + "\n\t" + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
         QMessageBox.information(self, "Completed successfully", text)
 
     def createMorphologyPlot(self):
@@ -1140,9 +1114,7 @@ class morganaApp(QWidget):
             # call the right visualization tool according to the number of dimensions
             # clean up quantifier handler:
             self.quantifier = [
-                self.quantifier[i]
-                for i in range(len(self.quantifier))
-                if self.quantifier[i] is not None
+                self.quantifier[i] for i in range(len(self.quantifier)) if self.quantifier[i] is not None
             ]
 
             if ndim == 0:
@@ -1177,9 +1149,7 @@ class morganaApp(QWidget):
         ][self.spatialType.currentIndex()]
 
         # extract data from all the folders
-        data_all = arrangefluodata.collect_fluo_data(
-            folders, channel, distributionType, self.isTimelapse.isChecked()
-        )
+        data_all = arrangefluodata.collect_fluo_data(folders, channel, distributionType, self.isTimelapse.isChecked())
 
         # if the result is None, something went wrong!
         if not data_all:
@@ -1208,32 +1178,16 @@ class morganaApp(QWidget):
 
         # call the right visualization tool according to the number of dimensions
         # clean up quantifier handler:
-        self.quantifier = [
-            self.quantifier[i]
-            for i in range(len(self.quantifier))
-            if self.quantifier[i] is not None
-        ]
+        self.quantifier = [self.quantifier[i] for i in range(len(self.quantifier)) if self.quantifier[i] is not None]
 
         if ndim == 0:
-            self.quantifier.append(
-                visualize0d.visualization_0d(
-                    data_key, distributionType, background=data_bckg
-                )
-            )
+            self.quantifier.append(visualize0d.visualization_0d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
         elif ndim == 1:
-            self.quantifier.append(
-                visualize1d.visualization_1d(
-                    data_key, distributionType, background=data_bckg
-                )
-            )
+            self.quantifier.append(visualize1d.visualization_1d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
         elif ndim == 2:
-            self.quantifier.append(
-                visualize2d.visualization_2d(
-                    data_key, distributionType, background=data_bckg
-                )
-            )
+            self.quantifier.append(visualize2d.visualization_2d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
 
     def makeSpotCountPlot(self):
@@ -1251,6 +1205,7 @@ class morganaApp(QWidget):
 
 
 if __name__ == "__main__":
+
     def run():
         app = QApplication(sys.argv)
         gallery = morganaApp()

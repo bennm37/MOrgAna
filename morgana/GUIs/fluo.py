@@ -160,29 +160,19 @@ class profileAP_condMode(QWidget):
         n_groups = len(self.data_all)
         n_folders = [len(self.data_all[group_idx]) for group_idx in range(n_groups)]
         n_gastr = [
-            [
-                len(self.data_all[group_idx][folder_idx]["input_file"])
-                for folder_idx in range(n_folders[group_idx])
-            ]
+            [len(self.data_all[group_idx][folder_idx]["input_file"]) for folder_idx in range(n_folders[group_idx])]
             for group_idx in range(n_groups)
         ]
 
         # rearrange dataset
-        profiles_all = [
-            [[0 for k in range(n_gastr[i][j])] for j in range(n_folders[i])]
-            for i in range(n_groups)
-        ]
+        profiles_all = [[[0 for k in range(n_gastr[i][j])] for j in range(n_folders[i])] for i in range(n_groups)]
         for i in range(n_groups):
             for j in range(n_folders[i]):
                 for k in range(n_gastr[i][j]):
-                    profiles_all[i][j][k] = np.array(
-                        self.data_all[i][j][self.profileType][k][self.channel]
-                    )
+                    profiles_all[i][j][k] = np.array(self.data_all[i][j][self.profileType][k][self.channel])
                     # subtract background or not
                     if self.bckgBtn.currentText() == "Background":
-                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][
-                            self.channel
-                        ]
+                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][self.channel]
                     if self.bckgBtn.currentText() == "Minimum":
                         profiles_all[i][j][k] -= np.min(profiles_all[i][j][k])
 
@@ -199,9 +189,7 @@ class profileAP_condMode(QWidget):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         profile = np.array(profiles_all[i][j][k])
-                        profiles_all[i][j][k] = np.clip(
-                            (profile - percs[0]) / (percs[1] - percs[0]), 0, 1.0
-                        )
+                        profiles_all[i][j][k] = np.clip((profile - percs[0]) / (percs[1] - percs[0]), 0, 1.0)
         elif self.YnormBtn.currentText() == "Group percentile":
             flat = [[] for i in range(n_groups)]
             for i in range(n_groups):
@@ -227,17 +215,14 @@ class profileAP_condMode(QWidget):
                     for k in range(n_gastr[i][j]):
                         for legend in profiles_all[i][j][k]:  # noqa E741
                             flat[i][j].append(legend)
-            percs = [
-                [np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat
-            ]
+            percs = [[np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat]
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         # print(percs[i][j])
                         profile = np.array(profiles_all[i][j][k])
                         profiles_all[i][j][k] = np.clip(
-                            (profile - percs[i][j][0])
-                            / (percs[i][j][1] - percs[i][j][0]),
+                            (profile - percs[i][j][0]) / (percs[i][j][1] - percs[i][j][0]),
                             0,
                             1.0,
                         )
@@ -266,11 +251,9 @@ class profileAP_condMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        y = np.array(profiles_all[i][j][k])[
-                            ~np.isnan(profiles_all[i][j][k])
-                        ]
+                        y = np.array(profiles_all[i][j][k])[~np.isnan(profiles_all[i][j][k])]
                         n_p = len(y)
-                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2):]):
+                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2) :]):
                             profiles_all[i][j][k] = profiles_all[i][j][k][::-1]
 
         # pad array to the right or left
@@ -346,11 +329,7 @@ class profileAP_condMode(QWidget):
         if self.legendBtn.isChecked():
             legend = ax.legend(
                 lines,
-                [
-                    "Group " + str(i + 1)
-                    for i in range(len(self.groupPlotBtn))
-                    if self.groupPlotBtn[i].isChecked()
-                ],
+                ["Group " + str(i + 1) for i in range(len(self.groupPlotBtn)) if self.groupPlotBtn[i].isChecked()],
             )
             legend.get_frame().set_linewidth(0.0)
 
@@ -472,29 +451,19 @@ class profileAP_tlMode(QWidget):
         n_groups = len(self.data_all)
         n_folders = [len(self.data_all[group_idx]) for group_idx in range(n_groups)]
         n_gastr = [
-            [
-                len(self.data_all[group_idx][folder_idx]["input_file"])
-                for folder_idx in range(n_folders[group_idx])
-            ]
+            [len(self.data_all[group_idx][folder_idx]["input_file"]) for folder_idx in range(n_folders[group_idx])]
             for group_idx in range(n_groups)
         ]
 
         # rearrange dataset
-        profiles_all = [
-            [[0 for k in range(n_gastr[i][j])] for j in range(n_folders[i])]
-            for i in range(n_groups)
-        ]
+        profiles_all = [[[0 for k in range(n_gastr[i][j])] for j in range(n_folders[i])] for i in range(n_groups)]
         for i in range(n_groups):
             for j in range(n_folders[i]):
                 for k in range(n_gastr[i][j]):
-                    profiles_all[i][j][k] = np.array(
-                        self.data_all[i][j][self.profileType][k][self.channel]
-                    )
+                    profiles_all[i][j][k] = np.array(self.data_all[i][j][self.profileType][k][self.channel])
                     # subtract background or not
                     if self.bckgBtn.currentText() == "Background":
-                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][
-                            self.channel
-                        ]
+                        profiles_all[i][j][k] -= self.data_all[i][j]["Background"][k][self.channel]
                     if self.bckgBtn.currentText() == "Minimum":
                         profiles_all[i][j][k] -= np.min(profiles_all[i][j][k])
 
@@ -512,9 +481,7 @@ class profileAP_tlMode(QWidget):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         profile = np.array(profiles_all[i][j][k])
-                        profiles_all[i][j][k] = np.clip(
-                            (profile - percs[0]) / (percs[1] - percs[0]), 0, 1.0
-                        )
+                        profiles_all[i][j][k] = np.clip((profile - percs[0]) / (percs[1] - percs[0]), 0, 1.0)
         elif self.YnormBtn.currentText() == "Group percentile":
             flat = [[] for i in range(n_groups)]
             for i in range(n_groups):
@@ -540,17 +507,14 @@ class profileAP_tlMode(QWidget):
                     for k in range(n_gastr[i][j]):
                         for l in profiles_all[i][j][k]:  # noqa E741
                             flat[i][j].append(l)
-            percs = [
-                [np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat
-            ]
+            percs = [[np.percentile(np.array(f), (0.3, 99.7)) for f in ff] for ff in flat]
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
                         # print(percs[i][j])
                         profile = np.array(profiles_all[i][j][k])
                         profiles_all[i][j][k] = np.clip(
-                            (profile - percs[i][j][0])
-                            / (percs[i][j][1] - percs[i][j][0]),
+                            (profile - percs[i][j][0]) / (percs[i][j][1] - percs[i][j][0]),
                             0,
                             1.0,
                         )
@@ -580,11 +544,9 @@ class profileAP_tlMode(QWidget):
             for i in range(n_groups):
                 for j in range(n_folders[i]):
                     for k in range(n_gastr[i][j]):
-                        y = np.array(profiles_all[i][j][k])[
-                            ~np.isnan(profiles_all[i][j][k])
-                        ]
+                        y = np.array(profiles_all[i][j][k])[~np.isnan(profiles_all[i][j][k])]
                         n_p = len(y)
-                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2):]):
+                        if np.sum(y[: int(n_p / 2)]) > np.sum(y[int(n_p - n_p / 2) :]):
                             profiles_all[i][j][k] = profiles_all[i][j][k][::-1]
 
         # pad array to the right or left
@@ -625,13 +587,7 @@ class profileAP_tlMode(QWidget):
         # compute and plot mean and std of the selected group
         # prepare blank image
         max_t = np.max([n_gastr[i][j] for j in range(n_folders[i])])
-        max_l = np.max(
-            [
-                len(profiles_all[i][j][k])
-                for j in range(n_folders[i])
-                for k in range(n_gastr[i][j])
-            ]
-        )
+        max_l = np.max([len(profiles_all[i][j][k]) for j in range(n_folders[i]) for k in range(n_gastr[i][j])])
 
         data_mean = np.zeros((max_t, max_l))
         data_count = np.zeros((max_t, max_l))
@@ -671,9 +627,5 @@ class profileAP_tlMode(QWidget):
 
             # convert the image into int16 with the right brightness and contrast
             if self.percs[0] is not None:
-                self.tif_data = (
-                    (2**16 - 1)
-                    * (self.tif_data - self.percs[0])
-                    / (self.percs[1] - self.percs[0])
-                )
+                self.tif_data = (2**16 - 1) * (self.tif_data - self.percs[0]) / (self.percs[1] - self.percs[0])
             imsave(name + "", self.tif_data.astype(np.uint16))
