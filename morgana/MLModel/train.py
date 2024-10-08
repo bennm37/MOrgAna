@@ -255,7 +255,7 @@ def train_unet(
         # This is the last layer of the model
         last = tf.keras.layers.Conv2DTranspose(
             filters=output_channels, kernel_size=3, strides=2, padding="same"
-        )  # 64x64 -> 128x128
+        )
         x = last(x)
 
         return tf.keras.Model(inputs=inputs, outputs=x)

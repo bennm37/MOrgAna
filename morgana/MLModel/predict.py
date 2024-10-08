@@ -1,9 +1,10 @@
-import os, time
+import time
 import numpy as np
 from skimage import transform, morphology, measure, segmentation
 from sklearn.metrics import classification_report
-from skimage.io import imread, imsave
-import scipy.ndimage as ndi
+# import scipy.ndimage as ndi
+from skimage.morphology import remove_small_holes, remove_small_objects
+from skimage.segmentation import clear_border
 import tensorflow as tf
 from morgana.ImageTools import processfeatures
 
@@ -18,7 +19,7 @@ def create_features(
     check_time=False,
 ):
 
-    ### read in kwargs
+    # read in kwargs
     start = time.time()
     if new_shape_scale != -1:
         shape = (
@@ -57,7 +58,7 @@ def predict(_input, classifier, shape=None, check_time=False, gt=np.array([]), m
 
     # use classifier to predict image
     start = time.time()
-    if model:
+    if model in ["MLP", "unet"]:
         y_prob = classifier.predict(_input)  # predict probabilities of every pixel for every class
     else:
         y_prob = classifier.predict_proba(_input)
@@ -133,14 +134,17 @@ def predict_image_unet(_input, scaler, model, image_size=(512, 512)):
     resized = tf.image.resize(_input.reshape(*_input.shape, 1), image_size)
     scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*image_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
-    return model.predict(rgb)
+    prob = model.predict(rgb)[0]
+    prob = transform.resize(prob, _input.shape)
+    pred = np.argmax(prob, axis=-1)
+    return pred, prob
 
 
 def make_watershed(mask, edge, new_shape_scale=-1):
 
     original_shape = mask.shape
 
-    ### read in kwargs
+    # read in kwargs
     if new_shape_scale != -1:
         shape = (
             int(mask.shape[0] * new_shape_scale),
@@ -153,13 +157,12 @@ def make_watershed(mask, edge, new_shape_scale=-1):
     edge = transform.resize(edge, shape, order=0, preserve_range=False)
     edge = ((edge - np.min(edge)) / (np.max(edge) - np.min(edge))) ** 2  # make mountains higher
 
-    # label image and compute cm
+    # label image and compute weighted center of mass
     labeled_foreground = (mask > np.min(mask)).astype(int)
     properties = measure.regionprops(labeled_foreground, mask)
     if not properties:
         weighted_cm = np.array([shape[0] - 1, shape[1] - 1])
     else:
-        center_of_mass = properties[0].centroid
         weighted_cm = properties[0].weighted_centroid
         weighted_cm = np.array(weighted_cm).astype(np.uint16)
 
@@ -170,7 +173,7 @@ def make_watershed(mask, edge, new_shape_scale=-1):
     if len(dist) > 0:
         weighted_cm = loc_m[dist.index(np.min(dist))]
 
-    # move corner marker to local minimum
+    # move corner marker smallest of 0,0 and nx,ny
     corner = np.array([0, 0])
     if edge[-1, -1] < edge[0, 0]:
         corner = np.array([edge.shape[0] - 1, edge.shape[1] - 1])
@@ -184,46 +187,11 @@ def make_watershed(mask, edge, new_shape_scale=-1):
     labels = segmentation.watershed(edge, markers.astype(np.uint))
     labels = (labels - np.min(labels)) / (np.max(labels) - np.min(labels))
     labels = transform.resize(labels, original_shape, order=0, preserve_range=False).astype(np.uint8)
-
     return labels
 
 
-def predict_image_from_file(f_in, classifier, scaler, params, model="logistic"):
-    parent, filename = os.path.split(f_in)
-    filename, file_extension = os.path.splitext(filename)
-    new_name_classifier = os.path.join(parent, "result_segmentation", filename + "_classifier" + file_extension)
-    new_name_watershed = os.path.join(parent, "result_segmentation", filename + "_watershed" + file_extension)
-    img = imread(f_in)
-    if len(img.shape) == 2:
-        img = np.expand_dims(img, 0)
-    if img.shape[-1] == np.min(img.shape):
-        img = np.moveaxis(img, -1, 0)
-    img = img[0]
-    if not os.path.exists(new_name_classifier):
-        pred, prob = predict_image(
-            img,
-            classifier,
-            scaler,
-            sigmas=params["sigmas"],
-            new_shape_scale=params["down_shape"],
-            feature_mode=params["feature_mode"],
-            model=model,
-        )
-
-        # remove objects at the border
-        negative = ndi.binary_fill_holes(pred == 0)
-        mask_pred = (pred == 1) * negative
-        edge_prob = ((2**16 - 1) * prob[2]).astype(np.uint16)
-        mask_pred = mask_pred.astype(np.uint8)
-
-        # save mask
-        imsave(new_name_classifier, pred)
-
-    if not os.path.exists(new_name_watershed):
-        # perform watershed
-        mask_final = make_watershed(mask_pred, edge_prob, new_shape_scale=params["down_shape"])
-
-        # save final mask
-        imsave(new_name_watershed, mask_final)
-
-    return None
+def make_mask(pred, area_threshold=200, min_size=200):
+    mask_pred = remove_small_objects(pred == 1, min_size=min_size)
+    mask_pred = remove_small_holes(mask_pred, area_threshold=area_threshold)
+    mask_pred = clear_border(mask_pred)
+    return mask_pred
