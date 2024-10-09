@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import re
+from morgana.DatasetTools.io import natural_key
 
 
 def save_segmentation_params(save_folder, filename, chosen_mask, down_shape, thinning, smoothing):
@@ -27,23 +28,14 @@ def save_segmentation_params(save_folder, filename, chosen_mask, down_shape, thi
         "thinning",
         "smoothing",
     ]
-
-    def natural_key(textlist):
-        return [[int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)] for text in textlist]
-
     params = params.sort_values(by="filename", key=natural_key)
     params[column_order].to_csv(os.path.join(save_folder, "segmentation_params.csv"))
 
 
 def load_segmentation_params(save_folder):
-
     # with open(os.path.join(save_folder,'segmentation_params.json'), 'r') as f:
     #     params = json.load(f)
     params = pd.read_csv(os.path.join(save_folder, "segmentation_params.csv"))
-
-    def natural_key(textlist):
-        return [[int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)] for text in textlist]
-
     params = params.sort_values(by="filename", key=natural_key)
     filename = params["filename"]
     chosen_mask = params["chosen_mask"]

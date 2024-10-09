@@ -4,10 +4,14 @@ from skimage import transform, morphology, measure, segmentation
 from sklearn.metrics import classification_report
 
 # import scipy.ndimage as ndi
+import os
+from scipy import ndimage as ndi
 from skimage.morphology import remove_small_holes, remove_small_objects
 from skimage.segmentation import clear_border
+from skimage.io import imread, imsave
 import tensorflow as tf
 from morgana.ImageTools import processfeatures
+from morgana.DatasetTools import io as ioDT
 
 
 def create_features(
@@ -139,6 +143,70 @@ def predict_image_unet(_input, classifier, scaler, image_size=(512, 512)):
     prob = transform.resize(prob, _input.shape)
     pred = np.argmax(prob, axis=-1)
     return pred, prob
+
+
+def predict_image_from_file(f_in, classifier, scaler, params, model="MLP"):
+    parent, filename = os.path.split(f_in)
+    filename, file_extension = os.path.splitext(filename)
+    new_name_classifier = os.path.join(parent, "result_segmentation", filename + "_classifier" + file_extension)
+    new_name_watershed = os.path.join(parent, "result_segmentation", filename + "_watershed" + file_extension)
+
+    img = imread(f_in)
+    if len(img.shape) == 2:
+        img = np.expand_dims(img, 0)
+    if img.shape[-1] == np.min(img.shape):
+        img = np.moveaxis(img, -1, 0)
+    img = img[0]
+
+    if not os.path.exists(new_name_classifier):
+        if model in ["MLP", "logistic"]:
+            pred, prob = predict_image(
+                img,
+                classifier,
+                scaler,
+                sigmas=params["sigmas"],
+                new_shape_scale=params["down_shape"],
+                feature_mode=params["feature_mode"],
+                model=model,
+            )
+        else:
+            pred, prob = predict_image_unet(
+                img,
+                classifier,
+                scaler,
+                image_size=params["image_size"],
+            )
+        negative = ndi.binary_fill_holes(pred == 0)
+        mask_pred = (pred == 1) * negative
+        edge_prob = ((2**16 - 1) * prob[2]).astype(np.uint16)
+        mask_pred = mask_pred.astype(np.uint8)
+        imsave(new_name_classifier, pred)
+
+    if not os.path.exists(new_name_watershed):
+        mask_final = make_watershed(mask_pred, edge_prob)
+        imsave(new_name_watershed, mask_final)
+    return None
+
+
+def predict_folder(image_folder_nested, classifier, scaler, params, model="MLP"):
+    """Opens the inspector for the segmentation results in a folder and all its subfolders."""
+    flist = os.listdir(image_folder_nested)
+    tifs = [f for f in flist if f.endswith(".tif")]
+    tifs = sorted(tifs, key=ioDT.natural_key)
+    if image_folder_nested.split("/")[-1] == "result_segmentation":
+        return
+    if len(tifs) > 0:
+        if "result_segmentation" not in flist:
+            os.mkdir(image_folder_nested + "/result_segmentation")
+        print("Classifying folder: " + image_folder_nested)
+        [
+            predict_image_from_file(os.path.join(image_folder_nested, f), classifier, scaler, params, model=model)
+            for f in tifs
+        ]
+    for folder in flist:
+        folder_path = os.path.join(image_folder_nested, folder)
+        if os.path.isdir(folder_path):
+            predict_folder(folder_path, classifier, scaler, params, model=model)
 
 
 def make_watershed(mask, edge, new_shape_scale=-1):

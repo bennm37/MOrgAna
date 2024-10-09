@@ -73,7 +73,7 @@ def save_model(
         f.write(to_unicode(str_))
 
 
-def load_model(model_folder, model="logistic"):
+def load_model(model_folder):
     """
     load a previously saved machine learning model from the "model_folder" input path:
     * model_folder/classifier.pkl: logistic classifier model
@@ -81,6 +81,10 @@ def load_model(model_folder, model="logistic"):
     * model_folder/params.json: parameters used for training
 
     """
+    scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
+    with open(os.path.join(model_folder, "params.json"), "r") as f:
+        params = json.load(f)
+    model = params.get("model", "logistic")
     if model == "logistic":
         try:
             classifier = joblib.load(os.path.join(model_folder, "classifier.pkl"))
@@ -93,8 +97,4 @@ def load_model(model_folder, model="logistic"):
             classifier = keras.models.load_model(os.path.join(model_folder, "classifier.keras"))
         except:  # noqa E722 # TODO find the correct exception
             return None, None, None
-
-    scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
-    with open(os.path.join(model_folder, "params.json"), "r") as f:
-        params = json.load(f)
     return classifier, scaler, params

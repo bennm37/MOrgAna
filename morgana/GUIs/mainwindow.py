@@ -510,9 +510,7 @@ class morganaApp(QWidget):
         # load parameters and classifier
         #############################################
         print("##### Loading classifier model and parameters...")
-        self.classifier, self.scaler, self.params = ioML.load_model(
-            self.modelFolder, model=self.modelType.currentText()
-        )
+        self.classifier, self.scaler, self.params = ioML.load_model(self.modelFolder)
         if self.classifier is None:
             QMessageBox.warning(self, "Warning!", "Could not find any model")
         else:

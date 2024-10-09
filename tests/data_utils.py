@@ -13,9 +13,9 @@ def create_test_model_folder(model, from_pretrained=False):
     if from_pretrained:
         shutil.copytree(model_tiny, model_folder)
         pretrained = f"./tests/test_data/pretrained/{model}"
-        if len(os.listdir(pretrained)) == 0:
+        if not check_pretrained(pretrained, model):
             print(f"Pretrained model for {model} not found. Creating new model.")
-            create_pretrained()
+            create_pretrained(model)
         [shutil.copy(os.path.join(pretrained, f), model_folder) for f in os.listdir(pretrained)]
     else:
         new_model(model_folder, model)
@@ -30,12 +30,27 @@ def create_test_model_folder(model, from_pretrained=False):
     return model_folder
 
 
-def create_pretrained():
-    for model in ["logistic", "unet", "MLP"]:
-        model_folder = create_test_model_folder(model, from_pretrained=False)
-        classifier, scaler, params = train_model(model, model_folder=model_folder, epochs=10, steps_per_epoch=2)
-        save_model(f"./tests/test_data/pretrained/{model}", classifier, scaler, **params)
+def check_pretrained(path, model):
+    valid = True
+    if model == "logistic":
+        if not os.path.exists(f"{path}/classifier.pkl"):
+            valid = False
+    else:
+        if not os.path.exists(f"{path}/classifier.keras"):
+            valid = False
+    if not os.path.exists(f"{path}/scaler.pkl"):
+        valid = False
+    if not os.path.exists(f"{path}/params.json"):
+        valid = False
+    return valid
+
+
+def create_pretrained(model):
+    model_folder = create_test_model_folder(model, from_pretrained=False)
+    classifier, scaler, params = train_model(model, model_folder=model_folder, epochs=10, steps_per_epoch=2)
+    save_model(f"./tests/test_data/pretrained/{model}", classifier, scaler, **params)
 
 
 if __name__ == "__main__":
-    create_pretrained()
+    for model in ["logistic", "unet", "MLP"]:
+        create_pretrained()
