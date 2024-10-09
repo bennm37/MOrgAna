@@ -13,6 +13,9 @@ def create_test_model_folder(model, from_pretrained=False):
     if from_pretrained:
         shutil.copytree(model_tiny, model_folder)
         pretrained = f"./tests/test_data/pretrained/{model}"
+        if len(os.listdir(pretrained)) == 0:
+            print(f"Pretrained model for {model} not found. Creating new model.")
+            create_pretrained()
         [shutil.copy(os.path.join(pretrained, f), model_folder) for f in os.listdir(pretrained)]
     else:
         new_model(model_folder, model)

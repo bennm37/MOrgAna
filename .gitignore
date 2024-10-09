@@ -166,3 +166,8 @@ cython_debug/
 .DS_Store
 */.DS_Store
 profile_results
+
+# Tests
+tests/test_data/pretrained/logistic/*
+tests/test_data/pretrained/MLP/*
+tests/test_data/pretrained/unet/*
