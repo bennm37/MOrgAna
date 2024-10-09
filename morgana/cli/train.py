@@ -13,12 +13,17 @@ from morgana.DatasetTools import io as ioDT
 from morgana.MLModel import io as ioML
 from morgana.MLModel import train
 import argparse
+import json
 
 
 ###############################################################################
 
 
 def train_model(model, model_folder, epochs=50, steps_per_epoch=10, **params):
+    default_path = os.path.join(os.path.dirname(__file__), f"../MLModel/default_params/{model}.json")
+    with open(default_path, "r") as f:
+        default_params = json.load(f)
+    params = {key: params.get(key, default_params[key]) for key in default_params.keys()}
     print("-------------" + model_folder + "------------")
     training_folder = os.path.join(model_folder, "trainingset")
     flist_in = ioDT.get_image_list(training_folder, string_filter="_GT", mode_filter="exclude")
@@ -56,7 +61,7 @@ def train_model(model, model_folder, epochs=50, steps_per_epoch=10, **params):
         )
         print("##### Training model...")
         start = time.time()
-        classifier = train.train_classifier(X, Y, w, model="MLP", epochs=epochs, steps_per_epoch=steps_per_epoch)
+        classifier = train.train_classifier(X, Y, w, model=model, epochs=epochs, steps_per_epoch=steps_per_epoch)
         print("Models trained in %.3f seconds." % (time.time() - start))
         ioML.save_model(
             model_folder,
@@ -97,6 +102,7 @@ def train_model(model, model_folder, epochs=50, steps_per_epoch=10, **params):
     else:
         raise ValueError("Model not recognized.")
     print("##### Model saved!")
+    return classifier, scaler, params
 
 
 def main():

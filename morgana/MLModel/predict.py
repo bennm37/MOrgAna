@@ -131,11 +131,11 @@ def predict_image(
     return y_pred.astype(np.uint8), y_prob
 
 
-def predict_image_unet(_input, scaler, model, image_size=(512, 512)):
+def predict_image_unet(_input, classifier, scaler, image_size=(512, 512)):
     resized = tf.image.resize(_input.reshape(*_input.shape, 1), image_size)
     scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*image_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
-    prob = model.predict(rgb)[0]
+    prob = classifier.predict(rgb)[0]
     prob = transform.resize(prob, _input.shape)
     pred = np.argmax(prob, axis=-1)
     return pred, prob

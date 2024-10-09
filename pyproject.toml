@@ -34,7 +34,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-qt", "pytest-qt-app", "black", "flake8"]
+dev = ["pytest",  "pytest-cov", "pytest-qt", "pytest-qt-app", "black", "flake8"]
 
 [project.scripts]
 classify = "morgana.scripts.classify:main"

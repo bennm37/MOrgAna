@@ -38,7 +38,6 @@ def save_model(
     model_folder,
     classifier,
     scaler,
-    model="logistic",
     **params,
 ):
     """
@@ -54,7 +53,7 @@ def save_model(
         to_unicode = unicode  # type: ignore
     except NameError:
         to_unicode = str
-
+    model = params.get("model", "logistic")
     if model == "logistic":
         joblib.dump(classifier, os.path.join(model_folder, "classifier.pkl"))
     else:
@@ -98,8 +97,4 @@ def load_model(model_folder, model="logistic"):
     scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
     with open(os.path.join(model_folder, "params.json"), "r") as f:
         params = json.load(f)
-
-    # patch to take into account the old definition of down_shape
-    if params["down_shape"] == 500:
-        params["down_shape"] = 500.0 / 2160.0
     return classifier, scaler, params

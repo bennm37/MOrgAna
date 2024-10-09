@@ -1,0 +1,13 @@
+{
+    "edge_size": 5,
+    "image_size": [
+        512,
+        512
+    ],
+    "model": "unet",
+    "sigmas": [
+        1.0,
+        5.0,
+        15.0
+    ]
+}
