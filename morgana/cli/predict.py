@@ -20,4 +20,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    model_folder = "/Users/nicholb/Documents/data/organoid_data/model_unet_test"
+    image_folder = "/Users/nicholb/Documents/data/organoid_data/model_unet_test/data"
+    classifier, scaler, params = ioML.load_model(model_folder)
+    params["model"]

@@ -3,7 +3,7 @@ import os
 import json
 import morgana.DatasetTools.io as ioDT
 import random
-
+import math
 
 def new_model(model_folder, model="logistic"):
     try:
@@ -47,7 +47,7 @@ def split_test(model_folder, fraction=0.1):
         os.path.join(model_folder, "trainingset"), string_filter="_GT", mode_filter="exclude"
     )
     n_img = len(flist_GT)
-    n_test = int(n_img * fraction)
+    n_test = math.ceil(n_img * fraction)
     for i in range(n_test):
         f = random.choice(flist_in)
         f_gt = f.replace(".tif", "_GT.tif")

@@ -158,13 +158,9 @@ def generate_training_set_unet(
 ):
     scaler = preprocessing.RobustScaler(quantile_range=(1.0, 99.0))
     scaler.fit(np.concatenate([img.flatten() for img in _input]).reshape(-1, 1))
-
-    _input = [scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input]
-    labels = [extract_edges(g, edge_size).reshape(*g.shape, 1) for g in gt]
-    dataset = [resize_data(x, y, downscaled_size) for x, y in zip(_input, labels)]
-    dataset = np.moveaxis(np.array(dataset), 1, 0)
-    dataset = tf.data.Dataset.from_tensor_slices(tuple(dataset))
-    dataset = dataset.map(lambda x, y: (tf.image.grayscale_to_rgb(x), y))
+    dataset = generate_test_set_unet(
+        _input, gt, scaler, downscaled_size=downscaled_size, edge_size=edge_size
+    )
     train_batches = (
         dataset.shuffle(buffer_size)
         .batch(batch_size)
@@ -173,6 +169,22 @@ def generate_training_set_unet(
         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     )
     return scaler, train_batches
+
+
+def generate_test_set_unet(
+    _input,
+    gt,
+    scaler,
+    downscaled_size=(512, 512),
+    edge_size=5,
+):
+    _input = [scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input]
+    labels = [extract_edges(g, edge_size).reshape(*g.shape, 1) for g in gt]
+    dataset = [resize_data(x, y, downscaled_size) for x, y in zip(_input, labels)]
+    dataset = np.moveaxis(np.array(dataset), 1, 0)
+    dataset = tf.data.Dataset.from_tensor_slices(tuple(dataset))
+    test_set = dataset.map(lambda x, y: (tf.image.grayscale_to_rgb(x), y))
+    return test_set
 
 
 def train_classifier(X, Y, w, model="logistic", epochs=50, steps_per_epoch=10, n_classes=3, hidden=(350, 50)):

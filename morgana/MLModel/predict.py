@@ -131,10 +131,10 @@ def predict_image(
     return y_pred.astype(np.uint8), y_prob
 
 
-def predict_image_unet(_input, classifier, scaler, image_size=(512, 512)):
+def predict_image_unet(_input, classifier, scaler, downscaled_size=(512, 512)):
     import tensorflow as tf
-    resized = tf.image.resize(_input.reshape(*_input.shape, 1), image_size)
-    scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*image_size, 1)
+    resized = tf.image.resize(_input.reshape(*_input.shape, 1), downscaled_size)
+    scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*downscaled_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
     prob = classifier.predict(rgb)[0]
     prob = transform.resize(prob, _input.shape)
@@ -171,7 +171,7 @@ def predict_image_from_file(f_in, classifier, scaler, params, model):
                 img,
                 classifier,
                 scaler,
-                image_size=params["image_size"],
+                downscaled_size=params["downscaled_size"],
             )
         mask_pred = make_mask(pred, area_threshold=200, min_size=200)
         edge_prob = ((2**16 - 1) * prob[2]).astype(np.uint16)

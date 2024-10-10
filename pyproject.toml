@@ -43,7 +43,7 @@ train = "morgana.CLI.train:main"
 split_test = "morgana.CLI.split_test:main"
 predict = "morgana.CLI.predict:main"
 correct = "morgana.CLI.correct:main"
-
+evaluate = "morgana.CLI.evaluate:main"
 
 [tool.setuptools.packages.find]
 include = ["*"]

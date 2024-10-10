@@ -10,6 +10,7 @@ import pandas as pd
 import os
 from multiprocessing import Pool
 from tqdm import tqdm
+import argparse
 
 
 # Function to fill holes in the binary mask
