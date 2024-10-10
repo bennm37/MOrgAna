@@ -7,6 +7,10 @@ def natural_key(text):
     return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
 
 
+def natural_key_list(text_list):
+    return [natural_key(text) for text in text_list]
+
+
 def get_image_list(input_folder, string_filter="", mode_filter="include"):
 
     flist = glob.glob(os.path.join(input_folder, "*.tif"))

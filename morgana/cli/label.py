@@ -2,7 +2,7 @@ import os
 import sys
 from morgana.GUIs.manualmask import makeManualMask
 from morgana.DatasetTools import io
-
+import argparse
 import PyQt5.QtWidgets
 
 
@@ -54,8 +54,9 @@ def create_GT_mask(model_folder):
 
 
 def main():
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/240924_model/model_clean"
-    # model_folder = "/Users/perezg/Documents/data/2024/240924_organo_segment"
+    p = argparse.ArgumentParser()
+    p.add_argument("model_folder", type=str)
+    model_folder = p.parse_args().model_folder
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     create_GT_mask(model_folder)
     app.quit()

@@ -256,10 +256,10 @@ class inspectionWindow_20max(QDialog):
         self.setImageLayoutButtonIcons()
 
     def setImageLayoutButtonIcons(self):
-        imgs, classifiers, watersheds = MLModel.overview.load_masks(
+        imgs, classifiers, watersheds, manuals = MLModel.overview.load_masks(
             self.imageFolder, start=self.start, stop=self.stop, downshape=5
         )
-        icons = MLModel.overview.create_icons(imgs, classifiers, watersheds)
+        icons = MLModel.overview.create_icons(imgs, classifiers, watersheds, manuals)
         for i in range(self.n_shown):
             image_array = icons[i]
             width, height, _ = image_array.shape
@@ -442,7 +442,7 @@ class inspectionWindow_20max(QDialog):
                     )
                 ):
                     print(f"Manual mask for {filename} not found!")
-                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed", parent=self)
                     self.m.show()
                     self.m.exec()
                 else:
@@ -499,7 +499,7 @@ class inspectionWindow_20max(QDialog):
                         filename + "_manual" + extension,
                     )
                 ):
-                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed", parent=self)
                     self.m.show()
                     self.m.exec()
                 else:
@@ -642,5 +642,5 @@ class inspectionWindow_20max(QDialog):
         self.chosen_masks[i] = "m"
         # self.remake()
         print(f"Opening Editor for Image {i}")
-        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour=txt)
+        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour=txt, parent=self)
         self.m.exec()

@@ -11,6 +11,7 @@ import PyQt5.QtWidgets
 from morgana.GUIs import inspection
 from morgana.DatasetTools.segmentation import io as ioSeg
 from morgana.DatasetTools import io as ioDT
+import argparse
 
 
 def correct(image_folder):
@@ -43,7 +44,7 @@ def correct(image_folder):
     w = inspection.inspectionWindow_20max(image_folder, parent=None, start=0, stop=20)
     w.show()
     app.exec()
-    app.quit("q")
+    app.quit()
 
 
 def correct_folder(image_folder_nested):
@@ -64,7 +65,12 @@ def correct_folder(image_folder_nested):
             correct_folder(folder_path)
 
 
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("image_folder", type=str)
+    args = p.parse_args()
+    correct(args.image_folder)
+
+
 if __name__ == "__main__":
-    correct_folder(
-        "/Users/perezg/Documents/data/2024/240924_organo_segment/241002_small/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1"
-    )
+    main()

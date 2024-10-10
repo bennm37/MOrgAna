@@ -1,5 +1,5 @@
 import pytest
-from morgana.cli.predict import predict_folder
+from morgana.CLI.predict import predict_folder
 from morgana.DatasetTools.io import get_image_list
 from morgana.MLModel.io import load_model
 from tests.data_utils import create_test_model_folder
@@ -22,7 +22,7 @@ def test_predict(model):
     assert len(flist) == len(flist_rs)
     for f_rs, f in zip(flist_rs, flist):
         assert f_rs.split("/")[-1].split("_")[0] == f.split("/")[-1].split(".")[0]
-    predict_folder(image_folder, classifier, scaler, params)
+    predict_folder(image_folder, classifier, scaler, params,  model=model)
     assert len(flist) == len(flist_rs)
     for f_rs, f in zip(flist_rs, flist):
         assert f_rs.split("/")[-1].split("_")[0] == f.split("/")[-1].split(".")[0]

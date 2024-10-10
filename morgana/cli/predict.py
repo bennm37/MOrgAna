@@ -1,8 +1,8 @@
 import os
-from morgana.DatasetTools import io as ioDT
 from morgana.MLModel import io as ioML
 from morgana.MLModel.predict import predict_folder
 import argparse
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -16,5 +16,8 @@ def main():
     model_folder = args.model_folder
     image_folder = args.image_folder
     classifier, scaler, params = ioML.load_model(model_folder)
-    predict_folder(image_folder, classifier, scaler, params)
+    predict_folder(image_folder, classifier, scaler, params, params["model"])
 
+
+if __name__ == "__main__":
+    main()

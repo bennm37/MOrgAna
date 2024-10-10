@@ -6,24 +6,20 @@ Created on Wed Apr  3 10:57:50 2019
 @author: ngritti
 """
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QElapsedTimer
-from PyQt5.QtGui import QKeyEvent
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QDialog, QPushButton, QLabel
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvas
-from matplotlib.backends.backend_qt5agg import (
-    NavigationToolbar2QT as NavigationToolbar,
-)
 import numpy as np
-import sys, warnings, os
+import warnings
+import os
 from skimage.io import imread, imsave
+from skimage.morphology import remove_small_objects, remove_small_holes
 from scipy.interpolate import splprep, splev
 from scipy.integrate import simps
 import cv2
 from shapely.geometry import Point, Polygon, LineString
-import matplotlib as mpl
 from matplotlib.path import Path as MplPath
-from shapely.geometry import Polygon
 
 warnings.filterwarnings("ignore")
 
@@ -39,12 +35,13 @@ class makeManualMask(QDialog):
         parent=None,
         wsize=(1000, 1000),
         initial_contour=None,
-        stride=10,
+        stride=1,
     ):
         super(makeManualMask, self).__init__(parent)
         self.setWindowTitle("Manual mask: " + file_in)
         QApplication.setStyle("Material")
         self.stride = stride
+        self.parent = parent
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
         self.file_in = file_in
         self.subfolder = subfolder
@@ -58,6 +55,11 @@ class makeManualMask(QDialog):
             self.mode = "drag"
             if initial_contour == "classifier":
                 mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_classifier.tif')}")
+            elif initial_contour == "manual":
+                try:
+                    mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_manual.tif')}")
+                except FileNotFoundError:
+                    mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_classifier.tif')}")
             else:
                 mask = imread(f"{input_folder}/result_segmentation/{filename.replace('.tif', '_watershed.tif')}")
             polygons = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
@@ -67,9 +69,9 @@ class makeManualMask(QDialog):
                 # raise Warning("More than one contour found. Using largest.")
             elif len(polygons) == 1:
                 self.coords = polygons[0][:, 0, :]
-                self.coords = self.coords[::stride]
             else:
                 self.coords = np.empty((0, 2))
+        self.coords = self.respace_spline(self.coords)
         self.drawCoords = np.empty((0, 2))
         self.previousCoords = []
         if len(img.shape) == 2:
@@ -139,6 +141,8 @@ class makeManualMask(QDialog):
         points = np.vstack((x, y)).T
         roi_path = MplPath(poly_verts)
         mask = 1 * roi_path.contains_points(points).reshape((ny, nx))
+        mask = remove_small_objects(mask, min_size=200)
+        mask = remove_small_holes(mask, area_threshold=200)
         self.updateMessage(f"Saved Mask: Area = {np.sum(mask)}")
         print(self.message)
         self.ax.set_title(self.message)
@@ -206,6 +210,32 @@ class makeManualMask(QDialog):
             and 0 <= np.dot(np.array(point) - ss, snipDirection) / np.dot(snipDirection, snipDirection) <= 1
         ]
         return oppositeInds
+
+    def respace_spline(self, coords, min_dist=20):
+        unique, inds = np.unique(coords, axis=0, return_index=True)
+        finalCoords = unique[np.argsort(inds)]
+        if len(unique) > 3:
+            tck = splprep(finalCoords.T, s=0, per=True)
+            n_spline = 1000
+            u_new = np.linspace(0, 1, n_spline)
+            x_new, y_new = splev(u_new, tck[0])
+            finalCoords = np.vstack((x_new, y_new)).T
+            start = np.argmin(np.linalg.norm(finalCoords - coords[0], axis=1))
+            if len(finalCoords) > 0:
+                end_point_dist = np.linalg.norm(finalCoords[-1] - finalCoords[start:], axis=1)
+                if np.any(end_point_dist > min_dist):
+                    start += np.where(end_point_dist > min_dist)[0].min()
+            end = np.argmin(np.linalg.norm(finalCoords - coords[-1], axis=1))
+            length = simps(np.linalg.norm(np.diff(finalCoords, axis=0), axis=1))
+            ds = length / n_spline
+            stride = int(np.ceil(min_dist / ds))  # stride so that every point is at least min_dist pixels apart
+            if start < end:
+                finalCoords = finalCoords[start:end:stride]
+            else:
+                finalCoords = np.vstack((finalCoords[start::stride], finalCoords[:end:stride]))
+        else:
+            finalCoords = unique
+        return finalCoords
 
     def __button_press_callback(self, event):
         if event.inaxes == self.ax:
@@ -283,27 +313,7 @@ class makeManualMask(QDialog):
             elif self.mode == "draw":
                 self.penDown = False
                 # remove duplicates from drawCoords but retain order
-                unique, inds = np.unique(self.drawCoords, axis=0, return_index=True)
-                coords = unique[np.argsort(inds)]
-                if len(unique) > 3:
-                    tck = splprep(coords.T, s=0, per=True)
-                    n_spline = 1000
-                    u_new = np.linspace(0, 1, n_spline)
-                    x_new, y_new = splev(u_new, tck[0])
-                    coords = np.vstack((x_new, y_new)).T
-                    start = np.argmin(np.linalg.norm(coords - self.drawCoords[0], axis=1))
-                    if len(self.coords) > 0:
-                        end_point_dist = np.linalg.norm(self.coords[-1] - coords[start:], axis=1)
-                        if np.any(end_point_dist > 20):
-                            start += np.where(end_point_dist > 20)[0].min()
-                    end = np.argmin(np.linalg.norm(coords - self.drawCoords[-1], axis=1))
-                    length = simps(np.linalg.norm(np.diff(coords, axis=0), axis=1))
-                    ds = length / n_spline
-                    stride = int(np.ceil(20 / ds))  # stride so that every point is at least 10 pixels apart
-                    if start < end:
-                        coords = coords[start:end:stride]
-                    else:
-                        coords = np.vstack((coords[start::stride], coords[:end:stride]))
+                coords = self.respace_spline(self.drawCoords)
                 self.drawCoords = np.empty((0, 2))
                 self.drawLine.set_data([], [])
                 self.canvas.draw()
@@ -356,6 +366,9 @@ class makeManualMask(QDialog):
                 self.lineType = "polygon"
             self.updateMessage(f"linetype toggled from {last} to {self.lineType}", draw=False)
             self.updateLine(self.coords)
+        elif event.key == "r":
+            self.updateLine(self.respace_spline(self.coords))
+            self.updateMessage("Respaced spline")
         elif event.key == "c":
             self.updateLine(np.empty((0, 2)))
             self.updateMessage("Cleared points")
@@ -371,6 +384,8 @@ class makeManualMask(QDialog):
             self.updateMessage("Mask saved")
         elif event.key == "q":
             self.updateMessage("Quitting")
+            if self.parent is not None:
+                self.parent.remake()
             self.close()
         elif event.key == "k":
             if self.keyboardShorcutsWindow is None:

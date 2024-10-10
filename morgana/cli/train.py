@@ -20,6 +20,7 @@ import json
 
 
 def train_model(model, model_folder, epochs=50, steps_per_epoch=10, **params):
+    print(f"Training model {model} in folder {model_folder} ...")
     default_path = os.path.join(os.path.dirname(__file__), f"../MLModel/default_params/{model}.json")
     with open(default_path, "r") as f:
         default_params = json.load(f)
@@ -107,10 +108,16 @@ def train_model(model, model_folder, epochs=50, steps_per_epoch=10, **params):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument(
-        "--model", "-m", type=str, help="Model to train", choices=["MLP", "unet", "logistic"], default="unet"
-    )
     p.add_argument("model_folder", type=str, help="Folder containing the training set")
     p.add_argument("--epochs", type=int, help="Number of epochs for training", default=50)
     args = p.parse_args()
-    train_model(args.model, args.model_folder, args.epochs)
+    params = ioML.load_params(args.model_folder)
+    try:
+        model = params["model"]
+    except KeyError:
+        raise ValueError("Model not specified in the params.json file.")
+    train_model(model, args.model_folder, args.epochs)
+
+
+if __name__ == "__main__":
+    main()

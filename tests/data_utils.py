@@ -2,7 +2,7 @@ import tempfile
 import os
 import shutil
 from morgana.MLModel.io import new_model, save_model
-from morgana.cli.train import train_model
+from morgana.CLI.train import train_model
 
 
 def create_test_model_folder(model, from_pretrained=False):

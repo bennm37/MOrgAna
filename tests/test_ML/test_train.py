@@ -1,5 +1,5 @@
 import pytest
-from morgana.cli.train import train_model
+from morgana.CLI.train import train_model
 from tests.data_utils import create_test_model_folder
 
 MODELS = ["logistic", "MLP", "unet"]

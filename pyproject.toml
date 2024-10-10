@@ -37,7 +37,12 @@ dependencies = [
 dev = ["pytest",  "pytest-cov", "pytest-qt", "pytest-qt-app", "black", "flake8"]
 
 [project.scripts]
-classify = "morgana.scripts.classify:main"
+new_model = "morgana.CLI.new_model:main"
+label = "morgana.CLI.label:main"
+train = "morgana.CLI.train:main"
+split_test = "morgana.CLI.split_test:main"
+predict = "morgana.CLI.predict:main"
+correct = "morgana.CLI.correct:main"
 
 
 [tool.setuptools.packages.find]

@@ -1,15 +1,11 @@
+import os
 import time
 import numpy as np
 from skimage import transform, morphology, measure, segmentation
 from sklearn.metrics import classification_report
-
-# import scipy.ndimage as ndi
-import os
-from scipy import ndimage as ndi
 from skimage.morphology import remove_small_holes, remove_small_objects
 from skimage.segmentation import clear_border
 from skimage.io import imread, imsave
-import tensorflow as tf
 from morgana.ImageTools import processfeatures
 from morgana.DatasetTools import io as ioDT
 
@@ -136,6 +132,7 @@ def predict_image(
 
 
 def predict_image_unet(_input, classifier, scaler, image_size=(512, 512)):
+    import tensorflow as tf
     resized = tf.image.resize(_input.reshape(*_input.shape, 1), image_size)
     scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*image_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
@@ -145,7 +142,7 @@ def predict_image_unet(_input, classifier, scaler, image_size=(512, 512)):
     return pred, prob
 
 
-def predict_image_from_file(f_in, classifier, scaler, params, model="MLP"):
+def predict_image_from_file(f_in, classifier, scaler, params, model):
     parent, filename = os.path.split(f_in)
     filename, file_extension = os.path.splitext(filename)
     new_name_classifier = os.path.join(parent, "result_segmentation", filename + "_classifier" + file_extension)
@@ -176,11 +173,9 @@ def predict_image_from_file(f_in, classifier, scaler, params, model="MLP"):
                 scaler,
                 image_size=params["image_size"],
             )
-        negative = ndi.binary_fill_holes(pred == 0)
-        mask_pred = (pred == 1) * negative
+        mask_pred = make_mask(pred, area_threshold=200, min_size=200)
         edge_prob = ((2**16 - 1) * prob[2]).astype(np.uint16)
-        mask_pred = mask_pred.astype(np.uint8)
-        imsave(new_name_classifier, pred)
+        imsave(new_name_classifier, mask_pred)
 
     if not os.path.exists(new_name_watershed):
         mask_final = make_watershed(mask_pred, edge_prob)
@@ -188,7 +183,7 @@ def predict_image_from_file(f_in, classifier, scaler, params, model="MLP"):
     return None
 
 
-def predict_folder(image_folder_nested, classifier, scaler, params, model="MLP"):
+def predict_folder(image_folder_nested, classifier, scaler, params, model):
     """Opens the inspector for the segmentation results in a folder and all its subfolders."""
     flist = os.listdir(image_folder_nested)
     tifs = [f for f in flist if f.endswith(".tif")]

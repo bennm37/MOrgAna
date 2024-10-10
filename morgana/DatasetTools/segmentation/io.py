@@ -1,17 +1,9 @@
 import os
 import pandas as pd
-import re
-from morgana.DatasetTools.io import natural_key
+from morgana.DatasetTools.io import natural_key_list
 
 
 def save_segmentation_params(save_folder, filename, chosen_mask, down_shape, thinning, smoothing):
-
-    # Make it work for Python 2+3 and with Unicode
-    try:
-        to_unicode = unicode
-    except NameError:
-        to_unicode = str
-
     params = pd.DataFrame(
         {
             "filename": filename,
@@ -28,15 +20,13 @@ def save_segmentation_params(save_folder, filename, chosen_mask, down_shape, thi
         "thinning",
         "smoothing",
     ]
-    params = params.sort_values(by="filename", key=natural_key)
+    params = params.sort_values(by="filename", key=natural_key_list)
     params[column_order].to_csv(os.path.join(save_folder, "segmentation_params.csv"))
 
 
 def load_segmentation_params(save_folder):
-    # with open(os.path.join(save_folder,'segmentation_params.json'), 'r') as f:
-    #     params = json.load(f)
     params = pd.read_csv(os.path.join(save_folder, "segmentation_params.csv"))
-    params = params.sort_values(by="filename", key=natural_key)
+    params = params.sort_values(by="filename", key=natural_key_list)
     filename = params["filename"]
     chosen_mask = params["chosen_mask"]
     down_shape = params["down_shape"]
