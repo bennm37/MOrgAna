@@ -13,7 +13,7 @@ def plot_histograms(losses, classifier_accuracies, watershed_accuracies):
     ax[1].set_title("Classifier Accuracies")
     ax[2].hist(watershed_accuracies, bins=bins)
     ax[2].set_title("Watershed Accuracies")
-    plt.show()
+    plt.savefig
 
 
 def main():
@@ -27,6 +27,9 @@ def main():
 
 
 if __name__ == "__main__":
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/fullModel"
+    model_folder = "/nemo/lab/vincentj/home/users/nicholb/organoid_data/model_unet"
     losses, classifier_accuracies, watershed_accuracies = evaluate(model_folder)
     plot_histograms(losses, classifier_accuracies, watershed_accuracies)
+    print(f"Mean Loss - {np.mean(losses)}")
+    print(f"Mean CAccuracy - {np.mean(classifier_accuracies)}")
+    print(f"Mean WAccuracy - {np.mean(watershed_accuracies)}")

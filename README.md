@@ -34,7 +34,7 @@ Download or clone the current repository, activate the `morgana` environment, mo
 
 <!--  #### Alternative:
 To install pip version of MOrgAna, run `pip install morgana` in terminal (MacOS) or command prompt(windows). -->
- 
+
 ### Optional
 
 To use GPU-acceleration in generation of masks, please first install TensorFlow 2 with GPU support. The tensorflow package can be installed with the command `pip install tensorflow` in terminal (MacOS) or command prompt(windows). Otherwise, please follow the official instructions for installation of tensorflow [here](https://www.tensorflow.org/install).
