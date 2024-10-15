@@ -21,7 +21,7 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    model_folder = "/Users/nicholb/Documents/data/organoid_data/model_unet_test"
-    image_folder = "/Users/nicholb/Documents/data/organoid_data/model_unet_test/data"
+    model_folder = "/camp/lab/vincentj/home/users/nicholb/organoid_data/model_unet"
+    image_folder = "/Volumes/lab-vincentj/home/users/nicholb/organoid_data/240930_saving/image_1_MMStack_control_DMSO_1-1.ome_restacked/ROI1"
     classifier, scaler, params = ioML.load_model(model_folder)
-    params["model"]
+    predict_folder(image_folder, classifier, scaler, params, params["model"])

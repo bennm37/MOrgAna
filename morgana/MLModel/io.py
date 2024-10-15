@@ -50,7 +50,13 @@ def split_test(model_folder, fraction=0.1):
     n_test = math.ceil(n_img * fraction)
     for i in range(n_test):
         f = random.choice(flist_in)
-        f_gt = f.replace(".tif", "_GT.tif")
+        f_gt = f[:-4] + "_GT.tif"
+        flist_in.remove(f)
+        try:
+            flist_GT.remove(f_gt)
+        except ValueError:
+            print(f"{f_gt} not in flist_GT")
+            print(f"{flist_GT = }")
         os.rename(f, os.path.join(model_folder, "testset", os.path.basename(f)))
         os.rename(f_gt, os.path.join(model_folder, "testset", os.path.basename(f_gt)))
     print(f"Split {n_test} images to {model_folder}/testset")

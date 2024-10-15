@@ -3,6 +3,9 @@ import numpy as np
 from skimage import transform, morphology
 from sklearn import preprocessing, linear_model
 from morgana.ImageTools import processfeatures
+import lazy_import
+tf = lazy_import.lazy_module("tensorflow")
+keras = lazy_import.lazy_module("tensorflow.keras")
 
 def downsize_image(image, down_shape):
     if down_shape != -1:
@@ -69,7 +72,7 @@ def generate_training_set(
         x_in, y_in = _input[i], gt[i]
         # compute all features
         X = processfeatures.get_features(x_in, sigmas, feature_mode=feature_mode)
-        Y = 1.0 * (y_in > np.min(gt))
+        Y = 1.0 * (y_in > np.min(gt[i]))
         edge = Y - morphology.binary_dilation(Y, morphology.disk(1))
         edge = morphology.binary_dilation(edge, morphology.disk(edge_size))
         Y = 1 * np.logical_or(Y, edge) + edge
@@ -115,7 +118,6 @@ def generate_training_set_unet(
     buffer_size=32,
     batch_size=32,
 ):
-    import tensorflow as tf
     from morgana.MLModel.augment import Augment
     tf.experimental.numpy.experimental_enable_numpy_behavior()  
     scaler = preprocessing.RobustScaler(quantile_range=(1.0, 99.0))
@@ -140,7 +142,6 @@ def generate_test_set_unet(
     downscaled_size=(512, 512),
     edge_size=5,
 ):
-    import tensorflow as tf
     tf.experimental.numpy.experimental_enable_numpy_behavior()  
     _input = [scaler.transform(img.reshape(-1, 1)).reshape(*img.shape, 1) for img in _input]
     labels = [extract_edges(g, edge_size).reshape(*g.shape, 1) for g in gt]
@@ -159,12 +160,9 @@ def train_classifier(X, Y, w, model="logistic", epochs=50, steps_per_epoch=10, n
         classifier.fit(X, Y, sample_weight=w)
     else:
         print("Training of MLP classifier...")
-        from tensorflow.keras import layers  # type: ignore
-        from tensorflow import keras
-
         Y = keras.utils.to_categorical(Y, num_classes=n_classes)
-        model_layers = [layers.Dense(hidden[i], activation="relu", name="layer%d" % i) for i in range(len(hidden))]
-        model_layers.append(layers.Dense(n_classes, activation="softmax", name="layer%d" % len(hidden)))
+        model_layers = [keras.layers.Dense(hidden[i], activation="relu", name="layer%d" % i) for i in range(len(hidden))]
+        model_layers.append(keras.layers.Dense(n_classes, activation="softmax", name="layer%d" % len(hidden)))
 
         classifier = keras.Sequential(model_layers)
         classifier.compile(
@@ -192,7 +190,6 @@ def train_unet(
     steps_per_epoch=10,
     input_shape=(512, 512, 3),
 ):
-    import tensorflow as tf
     tf.experimental.numpy.experimental_enable_numpy_behavior()  
     from tensorflow_examples.models.pix2pix import pix2pix
 

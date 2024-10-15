@@ -21,15 +21,17 @@ def main():
     p.add_argument("model_folder", type=str)
     p.add_argument("-p", "--plot", action="store_true", default=False)
     args = p.parse_args()
-    l, ca, wa = evaluate(args.model_folder)
+    df = evaluate(args.model_folder)
+    l = df["losses"]
+    ca = df["classifier_accuracies"]
+    wa = df["watershed_accuracies"]
+    print(df)
+    print(f"Mean Loss - {np.mean(l)}")
+    print(f"Mean CAccuracy - {np.mean(ca)}")
+    print(f"Mean WAccuracy - {np.mean(wa)}")
     if args.plot:
         plot_histograms(l, ca, wa)
 
 
 if __name__ == "__main__":
-    model_folder = "/nemo/lab/vincentj/home/users/nicholb/organoid_data/model_unet"
-    losses, classifier_accuracies, watershed_accuracies = evaluate(model_folder)
-    plot_histograms(losses, classifier_accuracies, watershed_accuracies)
-    print(f"Mean Loss - {np.mean(losses)}")
-    print(f"Mean CAccuracy - {np.mean(classifier_accuracies)}")
-    print(f"Mean WAccuracy - {np.mean(watershed_accuracies)}")
+    main()

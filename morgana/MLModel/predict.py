@@ -8,24 +8,25 @@ from skimage.segmentation import clear_border
 from skimage.io import imread, imsave
 from morgana.ImageTools import processfeatures
 from morgana.DatasetTools import io as ioDT
-
+import lazy_import
+tf = lazy_import.lazy_module("tensorflow")
 
 def create_features(
     _input,
     scaler,
     gt=np.array([]),
     sigmas=[0.1, 0.5, 1, 2.5, 5, 7.5, 10],
-    new_shape_scale=-1,
+    down_shape=-1,
     feature_mode="ilastik",
     check_time=False,
 ):
 
     # read in kwargs
     start = time.time()
-    if new_shape_scale != -1:
+    if down_shape != -1:
         shape = (
-            int(_input.shape[0] * new_shape_scale),
-            int(_input.shape[1] * new_shape_scale),
+            int(_input.shape[0] * down_shape),
+            int(_input.shape[1] * down_shape),
         )
     else:
         shape = _input.shape
@@ -102,7 +103,7 @@ def predict_image(
     scaler,
     gt=np.array([]),
     sigmas=[0.1, 0.5, 1, 2.5, 5, 7.5, 10],
-    new_shape_scale=-1,
+    down_shape=-1,
     feature_mode="ilastik",
     check_time=False,
     model="logistic",
@@ -114,7 +115,7 @@ def predict_image(
         scaler,
         gt=np.array([]),
         sigmas=sigmas,
-        new_shape_scale=new_shape_scale,
+        down_shape=down_shape,
         feature_mode=feature_mode,
         check_time=check_time,
     )
@@ -132,7 +133,7 @@ def predict_image(
 
 
 def predict_image_unet(_input, classifier, scaler, downscaled_size=(512, 512)):
-    import tensorflow as tf
+    tf.experimental.numpy.experimental_enable_numpy_behavior()
     resized = tf.image.resize(_input.reshape(*_input.shape, 1), downscaled_size)
     scaled = scaler.transform(resized.reshape(-1, 1)).reshape(*downscaled_size, 1)
     rgb = tf.image.grayscale_to_rgb(tf.constant([scaled], dtype=tf.float32))
@@ -162,7 +163,7 @@ def predict_image_from_file(f_in, classifier, scaler, params, model):
                 classifier,
                 scaler,
                 sigmas=params["sigmas"],
-                new_shape_scale=params["down_shape"],
+                down_shape=params["down_shape"],
                 feature_mode=params["feature_mode"],
                 model=model,
             )
@@ -204,15 +205,15 @@ def predict_folder(image_folder_nested, classifier, scaler, params, model):
             predict_folder(folder_path, classifier, scaler, params, model=model)
 
 
-def make_watershed(mask, edge, new_shape_scale=-1):
+def make_watershed(mask, edge, down_shape=-1):
 
     original_shape = mask.shape
 
     # read in kwargs
-    if new_shape_scale != -1:
+    if down_shape != -1:
         shape = (
-            int(mask.shape[0] * new_shape_scale),
-            int(mask.shape[1] * new_shape_scale),
+            int(mask.shape[0] * down_shape),
+            int(mask.shape[1] * down_shape),
         )
     else:
         shape = mask.shape

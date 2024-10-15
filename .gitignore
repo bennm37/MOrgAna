@@ -171,3 +171,6 @@ profile_results
 tests/test_data/pretrained/logistic/*
 tests/test_data/pretrained/MLP/*
 tests/test_data/pretrained/unet/*
+
+# Scripts
+scripts/logs

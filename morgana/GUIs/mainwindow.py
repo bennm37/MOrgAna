@@ -567,7 +567,7 @@ class morganaApp(QWidget):
                     self.classifier,
                     self.scaler,
                     sigmas=self.params["sigmas"],
-                    new_shape_scale=self.params["down_shape"],
+                    down_shape=self.params["down_shape"],
                     feature_mode=self.params["feature_mode"],
                     model=self.modelType.currentText(),
                 )
@@ -589,7 +589,7 @@ class morganaApp(QWidget):
             imsave(new_name, pred, check_contrast=False)
 
             # perform watershed
-            mask_final = predict.make_watershed(mask_pred, edge_prob, new_shape_scale=self.params["down_shape"])
+            mask_final = predict.make_watershed(mask_pred, edge_prob, down_shape=self.params["down_shape"])
 
             # save final mask
             parent, filename = os.path.split(f_in)
