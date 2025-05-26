@@ -29,11 +29,12 @@ Users can create a fresh environment with `conda create -n morgana python=3.9 pi
 
 ### Installation
 
-Download or clone the current repository, activate the `morgana` environment, move into the folder `MOrgAna` (i.e., the one containing the file `setup.py`), and run `pip install .`.
+Download or clone the current repository, activate the `morgana` environment, move into the folder `MOrgAna` (i.e., the one containing the file `setup.py`), and run `pip install .`. To use the Unet model, you must additionally install the pretrained encoder from `tensorflow-examples` using 
+`pip install git+https://github.com/tensorflow/examples.git` .
 
 <!--  #### Alternative:
 To install pip version of MOrgAna, run `pip install morgana` in terminal (MacOS) or command prompt(windows). -->
- 
+
 ### Optional
 
 To use GPU-acceleration in generation of masks, please first install TensorFlow 2 with GPU support. The tensorflow package can be installed with the command `pip install tensorflow` in terminal (MacOS) or command prompt(windows). Otherwise, please follow the official instructions for installation of tensorflow [here](https://www.tensorflow.org/install).
@@ -65,7 +66,7 @@ Each tif file in image folder should contain only one organoid with the brightfi
 <img src="https://raw.githubusercontent.com/LabTrivedi/MOrgAna/master/morgana/Examples/app_screenshots/binary_mask.png" alt="binary_mask" width="400"/>
 </p>
 
-3. Select `Use Multi Layer Perceptrons` if Tensorflow and CUDA have been successfully installed and if you would like to use deep learning to generate additional binary masks. 
+3. Select `MLP` or `Unet` if Tensorflow and CUDA have been successfully installed and if you would like to use deep learning to generate additional binary masks. 
 
 Users can choose to adjust the following parameters of the model by clicking `Show/Hide params`
 

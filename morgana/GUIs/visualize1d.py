@@ -320,11 +320,7 @@ class visualization_1d(QWidget):
         if self.legendBtn.isChecked():
             l = ax.legend(
                 lines,
-                [
-                    "Group " + str(i + 1)
-                    for i in range(len(self.groupPlotBtn))
-                    if self.groupPlotBtn[i].isChecked()
-                ],
+                ["Group " + str(i + 1) for i in range(len(self.groupPlotBtn)) if self.groupPlotBtn[i].isChecked()],
             )
             l.get_frame().set_linewidth(0.0)
 

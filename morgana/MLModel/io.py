@@ -1,47 +1,108 @@
-import joblib, os, json
+import joblib
+import os
+import json
+import morgana.DatasetTools.io as ioDT
+import random
+import math
+
+def new_model(model_folder, model="logistic"):
+    try:
+        to_unicode = unicode  # type: ignore
+    except NameError:
+        to_unicode = str
+    model_folder = os.path.abspath(model_folder)
+    if not os.path.exists(model_folder):
+        os.mkdir(model_folder)
+    else:
+        raise ValueError("Model folder already exists.")
+    os.mkdir(os.path.join(model_folder, "trainingset"))
+    if model not in ["logistic", "MLP", "unet"]:
+        raise ValueError("Model not recognized.")
+    # current file path
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    default_path = os.path.join(current_path, f"default_params/{model}.json")
+    default_params = json.load(open(default_path))
+    with open(os.path.join(model_folder, "params.json"), "w") as f:
+        str_ = json.dumps(
+            default_params,
+            indent=4,
+            sort_keys=True,
+            separators=(",", ": "),
+            ensure_ascii=False,
+        )
+        f.write(to_unicode(str_))
+    print(f"Created new {model} model at {model_folder}")
+    print("Populate the trainingset folder with images and edit the params.json file.")
+    return model_folder
+
+
+def split_test(model_folder, fraction=0.1):
+    assert folder_labeled(f"{model_folder}/trainingset")
+    assert not os.path.exists(os.path.join(model_folder, "testset")), f"{model_folder}/testset already exists."
+    os.mkdir(os.path.join(model_folder, "testset"))
+    flist_GT = ioDT.get_image_list(
+        os.path.join(model_folder, "trainingset"), string_filter="_GT", mode_filter="include"
+    )
+    flist_in = ioDT.get_image_list(
+        os.path.join(model_folder, "trainingset"), string_filter="_GT", mode_filter="exclude"
+    )
+    n_img = len(flist_GT)
+    n_test = math.ceil(n_img * fraction)
+    for i in range(n_test):
+        f = random.choice(flist_in)
+        f_gt = f.replace(".tif", "_GT.tif")
+        os.rename(f, os.path.join(model_folder, "testset", os.path.basename(f)))
+        os.rename(f_gt, os.path.join(model_folder, "testset", os.path.basename(f_gt)))
+    print(f"Split {n_test} images to {model_folder}/testset")
+    return True
+
+
+def folder_labeled(folder):
+    assert os.path.exists(folder), f"{folder} does not exist."
+    assert len(os.listdir(folder)) > 0, f"{folder} is empty."
+    flist_GT = ioDT.get_image_list(
+        folder, string_filter="_GT", mode_filter="include"
+    )
+    flist_in = ioDT.get_image_list(
+        folder, string_filter="_GT", mode_filter="exclude"
+    )
+    assert len(flist_GT) == len(flist_in), "Number of GT and input images do not match."
+    for f in flist_in:
+        fn, ext = os.path.splitext(f)
+        mask_name = fn + "_GT" + ext
+        assert os.path.exists(mask_name), f"Mask {mask_name} not found."
+    print(f"All images in {folder} are labeled.")
+    return True
 
 
 def save_model(
     model_folder,
     classifier,
     scaler,
-    sigmas=[0.1, 0.5, 1, 2.5, 5, 7.5, 10],
-    down_shape=-1,
-    edge_size=5,
-    fraction=0.1,
-    bias=-1,
-    feature_mode="ilastik",
-    deep=False,
+    **params,
 ):
     """
     save a previously generated machine learning model in the "model_folder" input path:
-    * model_folder\classifier.pkl: logistic classifier model
-    * model_folder\scaler.pkl: scaler used to normalize the trainingset
-    * model_folder\params.json: parameters used for training
+    * model_folder/classifier.pkl: logistic classifier model
+    * model_folder/scaler.pkl: scaler used to normalize the trainingset
+    * model_folder/params.json: parameters used for training
 
     """
 
     # Make it work for Python 2+3 and with Unicode
     try:
-        to_unicode = unicode
+        to_unicode = unicode  # type: ignore
     except NameError:
         to_unicode = str
-
-    if not deep:
+    model = params.get("model", "logistic")
+    if model == "logistic":
         joblib.dump(classifier, os.path.join(model_folder, "classifier.pkl"))
     else:
         classifier.save(os.path.join(model_folder, "classifier.keras"))
 
     joblib.dump(scaler, os.path.join(model_folder, "scaler.pkl"))
 
-    params = {
-        "sigmas": sigmas,
-        "down_shape": down_shape,
-        "edge_size": edge_size,
-        "fraction": fraction,
-        "bias": bias,
-        "feature_mode": feature_mode,
-    }
+    params["model"] = model
     with open(os.path.join(model_folder, "params.json"), "w", encoding="utf8") as f:
         str_ = json.dumps(
             params,
@@ -53,32 +114,33 @@ def save_model(
         f.write(to_unicode(str_))
 
 
-def load_model(model_folder, deep=False):
+def load_model(model_folder):
     """
     load a previously saved machine learning model from the "model_folder" input path:
-    * model_folder\classifier.pkl: logistic classifier model
-    * model_folder\scaler.pkl: scaler used to normalize the trainingset
-    * model_folder\params.json: parameters used for training
+    * model_folder/classifier.pkl: logistic classifier model
+    * model_folder/scaler.pkl: scaler used to normalize the trainingset
+    * model_folder/params.json: parameters used for training
 
     """
-    if not deep:
+    scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
+    params = load_params(model_folder)
+    model = params.get("model", "logistic")
+    if model == "logistic":
         try:
             classifier = joblib.load(os.path.join(model_folder, "classifier.pkl"))
-        except:
+        except:  # noqa E722 # TODO find the correct exception
             return None, None, None
     else:
         from tensorflow import keras
 
         try:
             classifier = keras.models.load_model(os.path.join(model_folder, "classifier.keras"))
-        except:
+        except:  # noqa E722 # TODO find the correct exception
             return None, None, None
+    return classifier, scaler, params
 
-    scaler = joblib.load(os.path.join(model_folder, "scaler.pkl"))
+
+def load_params(model_folder):
     with open(os.path.join(model_folder, "params.json"), "r") as f:
         params = json.load(f)
-
-    ### patch to take into account the old definition of down_shape
-    if params["down_shape"] == 500:
-        params["down_shape"] = 500.0 / 2160.0
-    return classifier, scaler, params
+    return params

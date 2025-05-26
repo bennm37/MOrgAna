@@ -35,9 +35,7 @@ def compute_profiles_fluo(fl, ma, m, visualize=False):
 
     # compute LR profile
     col_idx = np.sum(ma_straight, 0) > 0
-    lrProf = np.sum(fl_straight[:, col_idx] * ma_straight[:, col_idx], 0) / np.sum(
-        ma_straight[:, col_idx], 0
-    )
+    lrProf = np.sum(fl_straight[:, col_idx] * ma_straight[:, col_idx], 0) / np.sum(ma_straight[:, col_idx], 0)
 
     # compute radial profile
     fl = fl_straight[:, col_idx]

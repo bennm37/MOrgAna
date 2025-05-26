@@ -1,0 +1,8 @@
+{
+    "downscaled_size": [
+        512,
+        512
+    ],
+    "edge_size": 5,
+    "model": "unet"
+}

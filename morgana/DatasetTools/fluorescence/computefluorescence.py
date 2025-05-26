@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import os, tqdm
-from scipy.ndimage import map_coordinates
+import os
+import tqdm
 from itertools import repeat
 from skimage.io import imread
-from scipy.ndimage import label
-from skimage import measure, img_as_bool
+from skimage import img_as_bool
 import multiprocessing
 
 if __name__ == "__main__":
@@ -127,8 +126,8 @@ if __name__ == "__main__":
     save_folder = os.path.join(input_folder, "result_segmentation")
     fname = os.path.join(save_folder, cond + "_fluo_intensity.json")
 
-    ## if morpho_params of straighten image not created yet, compute and save
-    ## if not os.path.exists(fname):
+    # if morpho_params of straighten image not created yet, compute and save
+    # if not os.path.exists(fname):
     start = time.time()
     data = compute_fluorescence_info(input_folder)
     print(time.time() - start)

@@ -88,9 +88,7 @@ def compute_morphological_info(
     dict_["meshgrid_width"] = width
     dict_["meshgrid"] = mesh
     if compute_locoefa:
-        dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(
-            mask, down_shape
-        ).locoefa_coeff.values
+        dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(mask, down_shape).locoefa_coeff.values
     else:
         dict_["locoefa_coeff"] = 0.0
 
@@ -101,20 +99,14 @@ if __name__ == "__main__":
     import DatasetTools.io
     import DatasetTools.segmentation.io
 
-    input_folder = (
-        "C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"
-    )
+    input_folder = "C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"
     input_folder = "Y:\\Kerim_Anlas\\gastruloid_imaging\\PE_system\\timelapses\\2019-12-15_bragfp_dmso_sb024_xav2448_pd2448_10x_TL_48h__2019-12-15T15_19_49-Measurement 1\\dmso\\A02"
 
     flist_all = DatasetTools.io.get_image_list(input_folder)
     masks_folder = os.path.join(input_folder, "result_segmentation")
-    _, chosen_mask, down_shape, _, _ = DatasetTools.segmentation.io.load_segmentation_params(
-        masks_folder
-    )
+    _, chosen_mask, down_shape, _, _ = DatasetTools.segmentation.io.load_segmentation_params(masks_folder)
     flist_in = [flist_all[i] for i in range(len(flist_all)) if chosen_mask[i] != "i"]
-    flist_ma = DatasetTools.io.get_image_list(
-        masks_folder, string_filter="_finalMask.tif", mode_filter="include"
-    )
+    flist_ma = DatasetTools.io.get_image_list(masks_folder, string_filter="_finalMask.tif", mode_filter="include")
 
     # measure region props for every mask
     keys = [

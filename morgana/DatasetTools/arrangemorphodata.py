@@ -24,12 +24,6 @@ def collect_morpho_data(groups, morpho_params, computeMorpho, maskType, isTimela
         save_morphological_info = ioStraightMorph.save_straight_morpho_params
         load_morphological_info = ioStraightMorph.load_straight_morpho_params
         file_extension = "_morpho_straight_params.json"
-
-    try:
-        to_unicode = unicode
-    except NameError:
-        to_unicode = str
-
     morpho_params = [m for m, c in zip(morpho_params, computeMorpho) if c]
 
     # collect the data for every group
@@ -85,9 +79,7 @@ def collect_morpho_data(groups, morpho_params, computeMorpho, maskType, isTimela
 
             if isTimelapse:
                 # if this is a timelapse dataset, all data should be stored in the same object
-                rows = (
-                    pd.Series({key: list(data[key].values) for key in morpho_params}).to_frame().T
-                )
+                rows = pd.Series({key: list(data[key].values) for key in morpho_params}).to_frame().T
             else:
                 rows = data
 
@@ -99,9 +91,7 @@ def collect_morpho_data(groups, morpho_params, computeMorpho, maskType, isTimela
 
 
 if __name__ == "__main__":
-    folders = [
-        ["C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"]
-    ]
+    folders = [["C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"]]
     morpho_params = [
         "area",
         "eccentricity",

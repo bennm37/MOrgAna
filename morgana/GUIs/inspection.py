@@ -5,6 +5,13 @@ Created on Wed Apr  3 10:57:50 2019
 
 @author: ngritti
 """
+from morgana import GUIs
+from morgana.DatasetTools import io
+from morgana.DatasetTools.segmentation import io as ioSeg
+from morgana.ImageTools.segmentation import segment
+from morgana.DatasetTools.morphology import overview
+from morgana import MLModel
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,
@@ -22,24 +29,18 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
 )
-from PyQt5.QtGui import QImage, QPixmap, QIcon, QPalette, QColor
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 import numpy as np
-import warnings, os, tqdm
+import warnings
+import os
+import tqdm
 from skimage.io import imread, imsave
-import matplotlib.pyplot as plt
-
-from morgana import GUIs
-from morgana import ImageTools
-from morgana.DatasetTools import io
-from morgana.DatasetTools.segmentation import io as ioSeg
-from morgana.ImageTools.segmentation import segment
-from morgana.DatasetTools.morphology import overview
-from morgana import MLModel
 
 """
 utils_postprocessing
 """
 warnings.filterwarnings("ignore")
+
 
 class inspectionWindow_20max(QDialog):
     def __init__(self, imageFolder, parent=None, start=None, stop=None):
@@ -54,9 +55,9 @@ class inspectionWindow_20max(QDialog):
         self.make()
 
     def make(self):
-        if self.start == None:
+        if self.start is None:
             self.start = 0
-        if self.stop == None:
+        if self.stop is None:
             len(self.flist_in)
         self.stop = np.clip(self.stop, 0, self.n_imgs)
         self.n_shown = self.stop - self.start
@@ -75,9 +76,7 @@ class inspectionWindow_20max(QDialog):
                 self.down_shapes,
                 self.thinnings,
                 self.smoothings,
-            ) = ioSeg.load_segmentation_params(
-                os.path.join(self.imageFolder, "result_segmentation")
-            )
+            ) = ioSeg.load_segmentation_params(os.path.join(self.imageFolder, "result_segmentation"))
             self.flist_in = [os.path.join(self.imageFolder, i) for i in self.flist_in]
         else:
             self.chosen_masks = ["c" for i in range(self.n_imgs)]
@@ -199,9 +198,7 @@ class inspectionWindow_20max(QDialog):
         self.computeMaskForAllButton.setFocusPolicy(Qt.NoFocus)
         self.computeMaskForAllButton.clicked.connect(self.computeMaskForAll)
 
-        self.compute_meshgrid = QRadioButton(
-            "Compute full meshgrid (slow and high disk space usage!)"
-        )
+        self.compute_meshgrid = QRadioButton("Compute full meshgrid (slow and high disk space usage!)")
         self.compute_meshgrid.setChecked(False)
 
         self.setParamsForAllButton = QPushButton("Set params for all")
@@ -249,20 +246,20 @@ class inspectionWindow_20max(QDialog):
         self.imageLayoutButtons = []
         for i in range(self.n_shown):
             button = QToolButton()
+
             def handler(extra=None, i=i):
                 self.openEditor(i)
+
             button.clicked.connect(handler)
             self.imageLayoutButtons.append(button)
-            self.imageLayout.addWidget(button, i//self.ncols, i%self.ncols)
+            self.imageLayout.addWidget(button, i // self.ncols, i % self.ncols)
         self.setImageLayoutButtonIcons()
 
     def setImageLayoutButtonIcons(self):
-        imgs, classifiers, watersheds = MLModel.overview.load_masks(
+        imgs, classifiers, watersheds, manuals = MLModel.overview.load_masks(
             self.imageFolder, start=self.start, stop=self.stop, downshape=5
         )
-        icons = MLModel.overview.create_icons(
-            imgs, classifiers, watersheds
-        )
+        icons = MLModel.overview.create_icons(imgs, classifiers, watersheds, manuals)
         for i in range(self.n_shown):
             image_array = icons[i]
             width, height, _ = image_array.shape
@@ -445,7 +442,7 @@ class inspectionWindow_20max(QDialog):
                     )
                 ):
                     print(f"Manual mask for {filename} not found!")
-                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed", parent=self)
                     self.m.show()
                     self.m.exec()
                 else:
@@ -502,7 +499,7 @@ class inspectionWindow_20max(QDialog):
                         filename + "_manual" + extension,
                     )
                 ):
-                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed")
+                    self.m = GUIs.manualmask.makeManualMask(self.flist_in[i], initial_contour="watershed", parent=self)
                     self.m.show()
                     self.m.exec()
                 else:
@@ -543,8 +540,9 @@ class inspectionWindow_20max(QDialog):
         #############################################
         # compute morphology
         #############################################
-
-        # props = DatasetTools.morphology.computemorphology.compute_morphological_info(self.imageFolder, self.compute_meshgrid.isChecked())
+        # props = DatasetTools.morphology.computemorphology.compute_morphological_info(
+        #     self.imageFolder, self.compute_meshgrid.isChecked()
+        # )
         # DatasetTools.morphology.io.save_morpho_params(save_folder, cond, props)
 
         #############################################
@@ -630,9 +628,7 @@ class inspectionWindow_20max(QDialog):
             name = os.path.splitext(os.path.split(self.flist_in[self.start + i])[-1])[0]
             self.imageName[i].setText(name)
 
-            self.maskTypeSpaces[i].setCurrentIndex(
-                ["i", "c", "w", "m"].index(self.chosen_masks[self.start + i])
-            )
+            self.maskTypeSpaces[i].setCurrentIndex(["i", "c", "w", "m"].index(self.chosen_masks[self.start + i]))
 
             self.down_scaleSpaces[i].setValue(self.down_shapes[self.start + i])
 
@@ -646,5 +642,5 @@ class inspectionWindow_20max(QDialog):
         self.chosen_masks[i] = "m"
         # self.remake()
         print(f"Opening Editor for Image {i}")
-        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour=txt)
+        self.m = GUIs.manualmask.makeManualMask(self.flist_in[self.start + i], initial_contour=txt, parent=self)
         self.m.exec()

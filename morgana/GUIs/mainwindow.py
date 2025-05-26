@@ -5,7 +5,7 @@ Created on Wed Apr  3 10:57:50 2019
 
 @author: ngritti
 """
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,
     QComboBox,
@@ -31,11 +31,11 @@ from PyQt5.QtWidgets import (
     QFileSystemModel,
     QAbstractItemView,
 )
-from matplotlib.backends.backend_qt5agg import (
-    NavigationToolbar2QT as NavigationToolbar,
-)
 import numpy as np
-import sys, warnings, os, time
+import sys
+import warnings
+import os
+import time
 from skimage.io import imread, imsave
 import scipy.ndimage as ndi
 from collections.abc import Iterable
@@ -84,7 +84,7 @@ class morganaApp(QWidget):
         self.quantificationTab = self.createQuantificationTab()
         tabs.addTab(self.quantificationTab, "Quantification")
 
-        ### defined handler for subwindows
+        # defined handler for subwindows
         self.inspector = None
         self.quantifier = []
 
@@ -136,11 +136,9 @@ class morganaApp(QWidget):
     """
 
     def createModelGroup(self):
+        # create buttons for model definition group
         self.modelGroup = QGroupBox("")
-
-        ########## create buttons for model definition group ##############
         self.modelDefGroup = QGroupBox("Machine Learning model definition")
-
         selectModel = QPushButton("Specify model folder")
         selectModel.setFocusPolicy(Qt.NoFocus)
         selectModel.clicked.connect(self.selectModelFolder)
@@ -148,8 +146,10 @@ class morganaApp(QWidget):
         self.modelFolderSpace.setText(self.modelFolder)
         self.modelFolderSpace.setReadOnly(True)
         self.modelFolderSpace.setStyleSheet("color:gray;")
-        self.deepModel = QCheckBox("Use Multi Layer Perceptrons")
-        self.deepModel.setChecked(False)
+        self.modelType = QComboBox()
+        self.modelTypeLabel = QLabel("Model type:")
+        self.modelType.addItems(["logistic", "MLP", "unet"])
+        self.modelType.setCurrentIndex(0)
 
         self.showMoreButton = QPushButton("Show/Hide params")
         self.showMoreButton.setFocusPolicy(Qt.NoFocus)
@@ -196,7 +196,7 @@ class morganaApp(QWidget):
         self.trainButton.setFocusPolicy(Qt.NoFocus)
         self.trainButton.clicked.connect(self.trainModel)
 
-        ########## create buttons for model application group ##############
+        # create buttons for model application group
         self.predictionGroup = QGroupBox("Machine Learning model application")
 
         selectFolder = QPushButton("Specify image folder")
@@ -222,14 +222,14 @@ class morganaApp(QWidget):
         self.inspectButton.clicked.connect(self.openInspectionWindow)
         self.inspectButton.setEnabled(False)
 
-        ######### create layout for model definition group ########
+        # create layout for model definition group
         layout = QGridLayout()
-
         # layout.addWidget(self.welcomeText,      0,0,1,2)
         layout.addWidget(selectModel, 1, 0, 1, 2)
         layout.addWidget(QLabel("Model folder:"), 2, 0, 1, 1)
         layout.addWidget(self.modelFolderSpace, 2, 1, 1, 1)
-        layout.addWidget(self.deepModel, 3, 0, 1, 1)
+        layout.addWidget(self.modelTypeLabel, 3, 0, 1, 1)
+        layout.addWidget(self.modelType, 3, 1, 1, 1)
 
         layout.addWidget(self.showMoreButton, 4, 0, 1, 1)
         layout.addWidget(self.trainButton, 4, 1, 1, 1)
@@ -248,7 +248,7 @@ class morganaApp(QWidget):
 
         self.modelDefGroup.setLayout(layout)
 
-        ######### create layout for model application group ########
+        # create layout for model application group
         layout = QGridLayout()
 
         layout.addWidget(selectFolder, 13, 0, 1, 2)
@@ -278,7 +278,7 @@ class morganaApp(QWidget):
         self.biasSpace.hide()
         self.featuresLabel.hide()
         self.feature_modeSpace.hide()
-        self.showMoreModel = False
+        self.showMoremodel = "logistic"
 
         self.modelGroup.setLayout(layout)
 
@@ -296,7 +296,7 @@ class morganaApp(QWidget):
             self.biasSpace.hide()
             self.featuresLabel.hide()
             self.feature_modeSpace.hide()
-            self.showMoreModel = False
+            self.showMoremodel = "logistic"
         else:
             self.sigmasLabel.show()
             self.sigmasSpace.show()
@@ -310,7 +310,7 @@ class morganaApp(QWidget):
             self.biasSpace.show()
             self.featuresLabel.show()
             self.feature_modeSpace.show()
-            self.showMoreModel = True
+            self.showMoremodel = "MLP"
 
     def selectModelFolder(self):
         self.modelFolder = QFileDialog.getExistingDirectory(self, "Select Input Folder of Model")
@@ -319,13 +319,9 @@ class morganaApp(QWidget):
         # a trainingset needs to exist for every model, even if the model is already trained.
         trainingset_folder = os.path.join(self.modelFolder, "trainingset")
         if os.path.exists(trainingset_folder):
-            flist_in = ioDT.get_image_list(
-                trainingset_folder, string_filter="_GT", mode_filter="exclude"
-            )
+            flist_in = ioDT.get_image_list(trainingset_folder, string_filter="_GT", mode_filter="exclude")
             flist_in.sort()
-            flist_gt = ioDT.get_image_list(
-                trainingset_folder, string_filter="_GT", mode_filter="include"
-            )
+            flist_gt = ioDT.get_image_list(trainingset_folder, string_filter="_GT", mode_filter="include")
             flist_gt.sort()
 
             if len(flist_in) == 0:
@@ -397,9 +393,7 @@ class morganaApp(QWidget):
         self.edge_sizeSpace.setValue(self.params["edge_size"])
         self.fractionSpace.setValue(self.params["fraction"])
         self.biasSpace.setValue(self.params["bias"])
-        self.feature_modeSpace.setCurrentIndex(
-            ["-", "daisy", "ilastik"].index(self.params["feature_mode"])
-        )
+        self.feature_modeSpace.setCurrentIndex(["-", "daisy", "ilastik"].index(self.params["feature_mode"]))
         self.feature_modeSpace.model().item(0).setEnabled(False)
 
     def read_and_check_params(self):
@@ -410,7 +404,7 @@ class morganaApp(QWidget):
         for x in s_str.split(","):
             try:
                 self.params["sigmas"].append(float(x))
-            except:
+            except:  # noqa E722 # TODO find the correct exception
                 self.params["sigmas"].append(x)
         self.params["down_shape"] = self.down_shapeSpace.value()
         self.params["edge_size"] = self.edge_sizeSpace.value()
@@ -421,8 +415,7 @@ class morganaApp(QWidget):
             QMessageBox.warning(
                 self,
                 "Warning, values of sigmas not valid!",
-                "It seems there is at least one sigma that is not a number:\n"
-                + str(self.params["sigmas"]),
+                "It seems there is at least one sigma that is not a number:\n" + str(self.params["sigmas"]),
             )
 
     def trainModel(self, archBox):
@@ -462,26 +455,33 @@ class morganaApp(QWidget):
         #############################################
 
         print("##### Generating training set...")
-        X, Y, w, self.scaler = train.generate_training_set(
-            img_train,
-            [g.astype(np.uint8) for g in gt_train],
-            sigmas=self.params["sigmas"],
-            down_shape=self.params["down_shape"],
-            edge_size=self.params["edge_size"],
-            fraction=self.params["fraction"],
-            feature_mode=self.params["feature_mode"],
-            bias=self.params["bias"],
-        )
-
-        #############################################
-        # Train the model
-        #############################################
-
-        print("##### Training model...")
-        start = time.time()
-        self.classifier = train.train_classifier(
-            X, Y, w, deep=self.deepModel.isChecked(), hidden=(350, 50)
-        )
+        model = (self.modelType.currentText(),)
+        if model == "unet":
+            scaler, train_batches = train.generate_training_set_unet(
+                img_train,
+                [g.astype(np.uint8) for g in gt_train],
+                downscaled_size=(512, 512),
+                edge_size=self.params["edge_size"],
+                buffer_size=100,
+                batch_size=40,
+            )
+            start = time.time()
+            print("##### Training model...")
+            self.classifier = train.train_unet(train_batches, model="unet", epochs=10)
+        else:
+            X, Y, w, self.scaler = train.generate_training_set(
+                img_train,
+                [g.astype(np.uint8) for g in gt_train],
+                sigmas=self.params["sigmas"],
+                down_shape=self.params["down_shape"],
+                edge_size=self.params["edge_size"],
+                fraction=self.params["fraction"],
+                feature_mode=self.params["feature_mode"],
+                bias=self.params["bias"],
+            )
+            print("##### Training model...")
+            start = time.time()
+            self.classifier = train.train_classifier(X, Y, w, model=model, hidden=(350, 50))
         print("Models trained in %.3f seconds." % (time.time() - start))
         # print('classes_: ', self.classifier.classes_)
         # print('coef_: ', self.classifier.coef_)
@@ -500,7 +500,7 @@ class morganaApp(QWidget):
             fraction=self.params["fraction"],
             feature_mode=self.params["feature_mode"],
             bias=self.params["bias"],
-            deep=self.deepModel.isChecked(),
+            model=self.modelType.currentText(),
         )
         print("##### Model saved!")
         self.predictButton.setEnabled(True)
@@ -510,9 +510,7 @@ class morganaApp(QWidget):
         # load parameters and classifier
         #############################################
         print("##### Loading classifier model and parameters...")
-        self.classifier, self.scaler, self.params = ioML.load_model(
-            self.modelFolder, deep=self.deepModel.isChecked()
-        )
+        self.classifier, self.scaler, self.params = ioML.load_model(self.modelFolder)
         if self.classifier is None:
             QMessageBox.warning(self, "Warning!", "Could not find any model")
         else:
@@ -557,15 +555,22 @@ class morganaApp(QWidget):
             img = img[0]
 
             print("Predicting image...")
-            pred, prob = predict.predict_image(
-                img,
-                self.classifier,
-                self.scaler,
-                sigmas=self.params["sigmas"],
-                new_shape_scale=self.params["down_shape"],
-                feature_mode=self.params["feature_mode"],
-                deep=self.deepModel.isChecked(),
-            )
+            if self.modelType.currentText() == "unet":
+                pred, prob = predict.predict_image_unet(
+                    img,
+                    self.classifier,
+                    self.scaler,
+                )
+            else:
+                pred, prob = predict.predict_image(
+                    img,
+                    self.classifier,
+                    self.scaler,
+                    sigmas=self.params["sigmas"],
+                    new_shape_scale=self.params["down_shape"],
+                    feature_mode=self.params["feature_mode"],
+                    model=self.modelType.currentText(),
+                )
 
             # remove objects at the border
             negative = ndi.binary_fill_holes(pred == 0)
@@ -584,9 +589,7 @@ class morganaApp(QWidget):
             imsave(new_name, pred, check_contrast=False)
 
             # perform watershed
-            mask_final = predict.make_watershed(
-                mask_pred, edge_prob, new_shape_scale=self.params["down_shape"]
-            )
+            mask_final = predict.make_watershed(mask_pred, edge_prob, new_shape_scale=self.params["down_shape"])
 
             # save final mask
             parent, filename = os.path.split(f_in)
@@ -606,9 +609,7 @@ class morganaApp(QWidget):
             overviewML.generate_overview(self.imageFolder, saveFig=True, fileName=name, downshape=5)
 
     def openInspectionWindow(self):
-        self.inspector = inspection.inspectionWindow_20max(
-            self.imageFolder, parent=None, start=0, stop=20
-        )
+        self.inspector = inspection.inspectionWindow_20max(self.imageFolder, parent=None, start=0, stop=20)
         self.inspector.show()
 
     def selectMaskFolder(self):
@@ -628,11 +629,9 @@ class morganaApp(QWidget):
     """
 
     def createImportGroup(self):
+        """Create buttons for import masks and images group."""
         self.importGroup = QGroupBox("")
-
-        ########## create buttons for import masks and images group ##############
         self.importGroup1 = QGroupBox("If masks are already present, import files.")
-
         # self.instruct2 = QLabel('If masks are already generated, \nselect image and mask folder here.')
 
         selectFolder = QPushButton("Specify image folder")
@@ -1044,11 +1043,7 @@ class morganaApp(QWidget):
         text = "Composite files saved at:"
         for f in folders:
             parent, cond = os.path.split(f)
-            text = (
-                text
-                + "\n\t"
-                + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
-            )
+            text = text + "\n\t" + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
         QMessageBox.information(self, "Completed successfully", text)
 
     def createMeshgridOverviewAll(self):
@@ -1070,11 +1065,7 @@ class morganaApp(QWidget):
         text = "Meshgrid files saved at:"
         for f in folders:
             parent, cond = os.path.split(f)
-            text = (
-                text
-                + "\n\t"
-                + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
-            )
+            text = text + "\n\t" + os.path.join(os.path.split(parent)[-1], "result_segmentation", cond + file)
         QMessageBox.information(self, "Completed successfully", text)
 
     def createMorphologyPlot(self):
@@ -1119,11 +1110,9 @@ class morganaApp(QWidget):
                     first_object = first_object[0]
 
             # call the right visualization tool according to the number of dimensions
-            ### clean up quantifier handler:
+            # clean up quantifier handler:
             self.quantifier = [
-                self.quantifier[i]
-                for i in range(len(self.quantifier))
-                if self.quantifier[i] is not None
+                self.quantifier[i] for i in range(len(self.quantifier)) if self.quantifier[i] is not None
             ]
 
             if ndim == 0:
@@ -1158,9 +1147,7 @@ class morganaApp(QWidget):
         ][self.spatialType.currentIndex()]
 
         # extract data from all the folders
-        data_all = arrangefluodata.collect_fluo_data(
-            folders, channel, distributionType, self.isTimelapse.isChecked()
-        )
+        data_all = arrangefluodata.collect_fluo_data(folders, channel, distributionType, self.isTimelapse.isChecked())
 
         # if the result is None, something went wrong!
         if not data_all:
@@ -1188,33 +1175,20 @@ class morganaApp(QWidget):
                 first_object = first_object[0]
 
         # call the right visualization tool according to the number of dimensions
-        ### clean up quantifier handler:
-        self.quantifier = [
-            self.quantifier[i]
-            for i in range(len(self.quantifier))
-            if self.quantifier[i] is not None
-        ]
+        # clean up quantifier handler:
+        self.quantifier = [self.quantifier[i] for i in range(len(self.quantifier)) if self.quantifier[i] is not None]
 
         if ndim == 0:
-            self.quantifier.append(
-                visualize0d.visualization_0d(data_key, distributionType, background=data_bckg)
-            )
+            self.quantifier.append(visualize0d.visualization_0d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
         elif ndim == 1:
-            self.quantifier.append(
-                visualize1d.visualization_1d(data_key, distributionType, background=data_bckg)
-            )
+            self.quantifier.append(visualize1d.visualization_1d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
         elif ndim == 2:
-            self.quantifier.append(
-                visualize2d.visualization_2d(data_key, distributionType, background=data_bckg)
-            )
+            self.quantifier.append(visualize2d.visualization_2d(data_key, distributionType, background=data_bckg))
             self.quantifier[-1].show()
 
     def makeSpotCountPlot(self):
-        # print('createFluoGraph')
-        # return
-
         # extract all folders to compute
         folders = [[] for i in range(self.tabs.count())]
         for i in range(self.tabs.count()):
@@ -1223,86 +1197,11 @@ class morganaApp(QWidget):
             for j in range(table.rowCount()):
                 folders[i].append(table.item(j, 0).text())
 
-        # if self.spotsSpatialType.currentText()=='Average':
-        #     data_all = utils_quantify.collect_spots_data_from_folders(folders,spatialDistNeeded='count')
-        #     if not data_all:
-        #         return
-        #     utils_quantify.computeAndPlotMorphoAll(data_all,['count'],[True],
-        #                         int(self.spotsFluorescenceChannel.value()),
-        #                         self.isTimelapse.isChecked(),
-        #                         style=self.plotType.currentText())
-
-        # else:
-        #     ### plot the AP profile of the fluorescence in the mask
-        #     if self.spotsSpatialType.currentText()=='Antero-Posterior profile':
-        #         key1, key2 = 'APposition', 'APprofile'
-        #     ### plot the LR profile of the fluorescence in the mask
-        #     if self.spotsSpatialType.currentText()=='Left-Right profile':
-        #         key1, key2 = 'LRposition', 'LRprofile'
-        #     ### plot the radial profile of the fluorescence in the mask
-        #     if self.spotsSpatialType.currentText()=='Radial profile':
-        #         key1, key2 = 'RADposition', 'RADprofile'
-        #     ### plot the radial profile of the fluorescence in the mask
-        #     if self.spotsSpatialType.currentText()=='Angular profile':
-        #         key1, key2 = 'ANGposition', 'ANGprofile'
-
-        #     data_all = utils_quantify.collect_spots_data_from_folders(folders,spatialDistNeeded=key1)
-        #     if not data_all:
-        #         return
-        #     data_all = multi_objects_functions.convert_to_distribution(data_all,'count')
-        #     utils_quantify.computeProfileAll( data_all,
-        #                             channel = int(self.spotsFluorescenceChannel.value()),
-        #                             isTimelapse = self.isTimelapse.isChecked(),
-        #                             profileType = key2,
-        #                             ylabel='Cell count' )
-
     def createSpotsGraphAll(self):
         print("createSpotsGraphAll")
         return
 
-        # params = ['area','perimeter',
-        #           'major_axis_length','minor_axis_length','eccentricity',
-        #           'elliptical_fourier_transform','orientation','mean_intensity']
 
-        # toplot = [False for i in params]
-        # if self.spotsAreaRadio.isChecked():         toplot[0]=True
-        # if self.spotaPerimeterRadio.isChecked():    toplot[1]=True
-        # if self.spotsMajorAxisRadio.isChecked():    toplot[2]=True
-        # if self.spotsMinorAxisRadio.isChecked():    toplot[3]=True
-        # if self.spotsEccetricityRadio.isChecked():  toplot[4]=True
-        # if self.spotsEftRadio.isChecked():          toplot[5]=True
-        # if self.spotsOrientationRadio.isChecked():  toplot[6]=True
-        # if self.spotsFluoRadio.isChecked():         toplot[7]=True
-
-        # # extract all folders to compute
-        # folders = [[] for i in range(self.tabs.count())]
-        # for i in range(self.tabs.count()):
-
-        #     children = self.tabs.widget(i).children()
-        #     table = children[1]
-        #     for j in range(table.rowCount()):
-        #         folders[i].append( table.item(j,0).text() )
-
-        # if self.spotsSpatialType.currentText()=='Average':
-        #     print('To be implemented!')
-        #     # data_all = utils_quantify.collect_spots_data_from_folders(folders,spatialDistNeeded='Average')
-        #     # success = utils_quantify.computeAndPlotMorphoAll(data_all,params,t,int(self.fluorescenceChannel.value()),self.isTimelapse.isChecked())
-
-        # if self.spotsSpatialType.currentText()=='Antero-Posterior profile':
-        #     print("To be implemented!")
-        #     # self.createAPprofileAll_spots(folders)
-        #     # data_all = utils_quantify.collect_fluo_data_from_folders(folders,spatialDistNeeded='APprofile')
-        #     # success = utils_quantify.computeProfileAll(data_all,int(self.fluorescenceChannel.value()),self.isTimelapse.isChecked())
-
-        # if self.spotsSpatialType.currentText()=='Radial profile':
-        #     print("To be implemented!")
-        #     # data_all = utils_quantify.collect_fluo_data_from_folders(folders,spatialDistNeeded='RadialProfile')
-        #     # success = utils_quantify.computeProfileAll(data_all,int(self.fluorescenceChannel.value()),self.isTimelapse.isChecked())
-
-
-"""
-run the main gui from the current file
-"""
 if __name__ == "__main__":
 
     def run():

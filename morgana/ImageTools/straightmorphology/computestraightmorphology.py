@@ -53,7 +53,7 @@ def compute_straight_morphological_info(
     midline = prop["midline"]
     width = prop["meshgrid_width"]
     mesh = prop["meshgrid"]
-    if mesh == None:
+    if mesh is None:
         mesh = meshgrid.compute_meshgrid(midline, tangent, width)
 
     # straighten the mask
@@ -87,9 +87,7 @@ def compute_straight_morphological_info(
     dict_["input_file"] = os.path.split(f_in)[1]
     dict_["mask_file"] = os.path.join("result_segmentation", os.path.split(f_ma)[1])
     if compute_locoefa:
-        dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(
-            ma_straight, down_shape
-        ).locoefa_coeff.values
+        dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(ma_straight, down_shape).locoefa_coeff.values
     else:
         dict_["locoefa_coeff"] = 0.0
 
@@ -100,7 +98,9 @@ if __name__ == "__main__":
     import DatasetTools.segmentation.io
     import DatasetTools.morphology.io
 
-    input_folder = "C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2019-11-30_control_esl2448_esl024_esl_72h\\control"
+    input_folder = (
+        "C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2019-11-30_control_esl2448_esl024_esl_72h\\control"
+    )
     input_folder = "Y:\\Kerim_Anlas\\gastruloid_imaging\\PE_system\\timelapses\\2019-12-15_bragfp_dmso_sb024_xav2448_pd2448_10x_TL_48h__2019-12-15T15_19_49-Measurement 1\\dmso\\A02"
 
     _, cond = os.path.split(input_folder)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     midline = prop["midline"]
     width = prop["meshgrid_width"]
     mesh = prop["meshgrid"]
-    if mesh == None:
+    if mesh is None:
         mesh = meshgrid.compute_meshgrid(midline, tangent, width)
 
     # straighten the mask
@@ -153,6 +153,4 @@ if __name__ == "__main__":
     dict_["input_file"] = os.path.split(f_in)[1]
     dict_["mask_file"] = os.path.join("result_segmentation", os.path.split(f_ma)[1])
     print(np.max(ma_straight.astype(float)))
-    dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(
-        ma_straight, down_shape[i]
-    ).locoefa_coeff.values
+    dict_["locoefa_coeff"] = computecoeff.compute_LOCOEFA_Lcoeff(ma_straight, down_shape[i]).locoefa_coeff.values

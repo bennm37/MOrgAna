@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 
 if __name__ == "__main__":
     import sys
@@ -13,7 +12,7 @@ from morgana.DatasetTools.fluorescence import computefluorescence, io
 def collect_fluo_data(groups, channel, distType, isTimelapse=False):
 
     try:
-        to_unicode = unicode
+        to_unicode = unicode  # type: ignore
     except NameError:
         to_unicode = str
 
@@ -97,9 +96,7 @@ def collect_fluo_data(groups, channel, distType, isTimelapse=False):
 
 
 if __name__ == "__main__":
-    folders = [
-        ["C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"]
-    ]
+    folders = [["C:\\Users\\nicol\\Documents\\Repos\\gastrSegment_testData\\2020-02-20_David_TL\\g03G"]]
     channel = 1
     distributionType = "Average"
     isTimelapse = False

@@ -94,9 +94,7 @@ class visualization_0d(QWidget):
         self.bckgBtn.addItem("Background")
 
         self.pxlsize = QLineEdit()
-        self.pxlsize.setValidator(
-            QDoubleValidator(0, 1000000, 5, notation=QDoubleValidator.StandardNotation)
-        )
+        self.pxlsize.setValidator(QDoubleValidator(0, 1000000, 5, notation=QDoubleValidator.StandardNotation))
         self.pxlsize.setText("1.0")
         self.dimensionality = QLineEdit()
         self.dimensionality.setValidator(QIntValidator())

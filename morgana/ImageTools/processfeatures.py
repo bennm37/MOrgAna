@@ -43,9 +43,7 @@ def get_features(
             orientations=orientations,
         )
         daisy_features = np.moveaxis(daisy_features, -1, 0)
-        daisy_features = np.stack(
-            [np.pad(i, (radius, radius), mode="edge") for i in daisy_features]
-        )
+        daisy_features = np.stack([np.pad(i, (radius, radius), mode="edge") for i in daisy_features])
         out = np.concatenate((out, daisy_features), axis=0)
 
     return out

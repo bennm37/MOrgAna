@@ -94,11 +94,11 @@ class spotWindow(QDialog):
         params_default = [0.8, 2, 0, (2, self.img.shape[1] * self.img.shape[2])]
         for i, p in enumerate(self.params):
             # if there is no channel indexing, create one if length 1
-            if p == None:
+            if p is None:
                 self.params[i] = [None for i in self.n_channels]
             # for every element in the channel indexing, if it is None, set it to defualt
             for ch in range(len(p)):
-                if (p[ch] == None) or (p[ch] == (None, None)):
+                if (p[ch] is None) or (p[ch] == (None, None)):
                     self.params[i][ch] = params_default[i]
 
         # create window
@@ -228,9 +228,7 @@ class spotWindow(QDialog):
         ### update the plot
         self.figure.clear()
         axs = self.figure.subplots(nrows=1, ncols=4)
-        self.figure.subplots_adjust(
-            top=0.9, right=1.0, left=0.0, bottom=0.2
-        )  # ,wspace=0.01)#,hspace=0.01)
+        self.figure.subplots_adjust(top=0.9, right=1.0, left=0.0, bottom=0.2)  # ,wspace=0.01)#,hspace=0.01)
         for i in [0, 1, 3]:
             axs[i].axis("off")
         axs[2].set_xlabel("Fluo")
